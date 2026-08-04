@@ -124,9 +124,10 @@ def test_utility_score_perfect_prediction():
     labels = np.array([0, 0, 0, 0, 0, 0, 1, 1, 1, 1])  # onset at hour 6 (0-indexed)
     preds  = np.array([1, 0, 0, 0, 0, 0, 0, 0, 0, 0])  # alarm raised at hour 0 (6h early)
 
-    u, u_best = _compute_utility_for_patient(labels, preds)
+    u, u_best, u_inaction = _compute_utility_for_patient(labels, preds)
     assert u > 0.0
     assert abs(u - u_best) < 1e-5  # achieves maximum utility credit
+
 
 
 if __name__ == "__main__":
