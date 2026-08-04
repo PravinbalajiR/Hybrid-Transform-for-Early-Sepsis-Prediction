@@ -1,7 +1,8 @@
-model: hybrid
+model: m4_v2_no_forecast
 epochs: 30
 batch_size: 32
 learning_rate: 0.0001
+weight_decay: 0.0001
 patience: 10
 hidden_dim: 64
 num_heads: 4

@@ -1,4 +1,4 @@
-model: hybrid
+model: m4_v2
 epochs: 30
 batch_size: 32
 learning_rate: 0.0001
