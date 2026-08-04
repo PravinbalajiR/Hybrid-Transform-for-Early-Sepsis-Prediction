@@ -35,13 +35,13 @@ def load_config(config_path: str) -> dict:
 
 
 def build_model(config: dict, device: torch.device) -> nn.Module:
-    model_type = config.get("model", "plain_transformer")
+    model_type = str(config.get("model", "m2")).lower()
     hidden_dim = config.get("hidden_dim", 64)
     num_heads = config.get("num_heads", 4)
     layers = config.get("layers", 3)
     ablation_mode = config.get("ablation_mode", "none")
     
-    if model_type == "hybrid":
+    if "m4" in model_type or "hybrid" in model_type:
         model = SepsisHybridModel(
             input_dim=34 * 3,
             d_model=hidden_dim,
@@ -51,9 +51,9 @@ def build_model(config: dict, device: torch.device) -> nn.Module:
         ).to(device)
         return model
 
-    if model_type == "plain_transformer":
+    if "m2" in model_type or "plain" in model_type:
         input_dim = 34
-    elif model_type in ["time_aware_transformer", "tact"]:
+    elif "m3" in model_type or "time_aware" in model_type or "tact" in model_type:
         input_dim = 34 * 3
     else:
         raise ValueError(f"Unknown model type: {model_type}")
@@ -67,6 +67,7 @@ def build_model(config: dict, device: torch.device) -> nn.Module:
     ).to(device)
     
     return model
+
 
 
 def save_plots(metrics_history: dict, save_dir: Path):
@@ -307,7 +308,7 @@ def main():
     # Using a dict criterion with UtilityAwareLoss on M3 was introducing a Python
     # loop over every batch row which hurt both speed and correctness.
     ablation_mode = config.get("ablation_mode", "none")
-    if config.get("model") == "tact" and ablation_mode in ["focal_only", "tact_ugo"]:
+    if "tact_ugo" in model_name.lower() or ablation_mode in ["focal_only", "tact_ugo"]:
         criterion = {
             "focal": FocalLoss(pos_weight=pos_weight.item(), gamma=2.0, reduction="mean"),
             "utility": UtilityAwareLoss(base_pos_weight=pos_weight.item(), reduction="mean")
@@ -323,9 +324,9 @@ def main():
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', factor=0.5, patience=3)
     scaler = GradScaler()
 
-    # BUG FIX: input_key must reflect the actual triplet encoding for TACT models.
-    # 'values' = plain (M2), 'triplet' = time-aware M3 and all ablations.
-    input_key = "values" if model_name == "plain_transformer" else "triplet"
+    # input_key: 'values' for M2 / plain_transformer, 'triplet' for M3, M4, TACT
+    input_key = "values" if ("m2" in model_name.lower() or "plain" in model_name.lower()) else "triplet"
+
     
     start_epoch = 1
     best_val_utility = -np.inf
