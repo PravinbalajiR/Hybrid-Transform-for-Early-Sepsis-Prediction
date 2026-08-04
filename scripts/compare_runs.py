@@ -8,8 +8,11 @@ def main():
         print("No experiments directory found.")
         return
         
-    print("| Model | AUROC  | AUPRC  | Utility | F1 | Train Time |")
-    print("| ----- | ------ | ------ | ------- | -- | ---------- |")
+    print("\n=========================================================================================================")
+    print("                                MASTER EXPERIMENTAL COMPARISON TABLE                                      ")
+    print("=========================================================================================================")
+    print("| Model | Utility | AUROC | AUPRC | F1 | Precision | Recall | ECE | Mean Lead Time |")
+    print("| ----- | ------- | ----- | ----- | -- | --------- | ------ | --- | -------------- |")
     
     for model_dir in exp_dir.iterdir():
         if not model_dir.is_dir():
@@ -17,9 +20,9 @@ def main():
             
         model_name = model_dir.name
         
-        # Find all runs for this model
+        # Find latest run for this model
         best_run = None
-        best_auroc = -1.0
+        latest_time = 0
         
         for run_dir in model_dir.iterdir():
             if not run_dir.is_dir():
@@ -29,24 +32,29 @@ def main():
             if not metrics_path.exists():
                 continue
                 
-            with open(metrics_path, "r") as f:
-                try:
-                    metrics = json.load(f)
-                    auroc = metrics.get("auroc", 0)
-                    if auroc > best_auroc:
-                        best_auroc = auroc
-                        best_run = metrics
-                except Exception:
-                    pass
+            mtime = metrics_path.stat().st_mtime
+            if mtime > latest_time:
+                latest_time = mtime
+                with open(metrics_path, "r") as f:
+                    try:
+                        best_run = json.load(f)
+                    except Exception:
+                        pass
                     
         if best_run:
-            auroc = f"{best_run.get('auroc', 0):.4f}"
-            auprc = f"{best_run.get('auprc', 0):.4f}"
-            utility = f"{best_run.get('utility_score', 0):.2f}"
-            f1 = f"{best_run.get('f1', 0):.4f}"
-            # Time isn't saved in metrics currently, maybe grab from history.csv later
-            time_str = "—" 
-            print(f"| {model_name} | {auroc} | {auprc} | {utility} | {f1} | {time_str} |")
+            utility = f"{best_run.get('utility_score', 0):.4f}"
+            auroc   = f"{best_run.get('auroc', 0):.4f}"
+            auprc   = f"{best_run.get('auprc', 0):.4f}"
+            f1      = f"{best_run.get('f1', 0):.4f}"
+            prec    = f"{best_run.get('precision', 0):.4f}"
+            rec     = f"{best_run.get('recall', 0):.4f}"
+            ece     = f"{best_run.get('ece', 0):.4f}"
+            
+            lead_h  = best_run.get('timing_mean_lead_h', None)
+            lead_str = f"{lead_h:.1f}h" if lead_h is not None else "N/A"
+            
+            print(f"| {model_name:12s} | {utility:7s} | {auroc:5s} | {auprc:5s} | {f1:4s} | {prec:9s} | {rec:6s} | {ece:3s} | {lead_str:14s} |")
 
 if __name__ == "__main__":
     main()
+
