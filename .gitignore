@@ -1,0 +1,58 @@
+# Python / Byte-compiled
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Environments
+.venv/
+venv/
+env/
+ENV/
+
+# Archives & Zips
+*.zip
+*.tar.gz
+*.7z
+
+# Dataset & Large Files (PhysioNet data use agreement & size limits)
+data/raw/
+data/processed/
+data/splits/
+*.psv
+*.csv
+
+# Model Checkpoints & Experiments
+experiments/
+debug/
+checkpoints/
+*.pth
+*.pt
+*.ckpt
+*.onnx
+*.bin
+
+# TensorBoard & Experiment Logs
+runs/
+logs/
+*.log
+events.out.tfevents.*
+outputs/
+
+# Figures generated during experiments
+figures/generated/
+
+# Jupyter Notebooks
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS specific
+.DS_Store
+Thumbs.db
+
