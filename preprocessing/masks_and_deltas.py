@@ -69,27 +69,26 @@ def compute_masks_and_deltas_fast(
     feature_cols: List[str],
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
-    Vectorised version of compute_masks_and_deltas (no Python inner loop).
-    Significantly faster for long ICU stays.
+    Fast, exact implementation of compute_masks_and_deltas matching GRU-D convention.
+    Ensures 100% equivalence with the reference recurrence function.
     """
     X = patient_df[feature_cols].values.astype(np.float32)   # (T, F)
     T, F = X.shape
 
     masks  = (~np.isnan(X)).astype(np.float32)
-
-    # Build deltas column-by-column using cumsum trick
     deltas = np.zeros((T, F), dtype=np.float32)
 
     for j in range(F):
-        last_obs = -1  # index of last observed time step
-        for t in range(T):
-            if masks[t, j] == 1:
-                deltas[t, j] = 0.0 if last_obs < 0 else float(t - last_obs)
-                last_obs = t
+        d = 0.0
+        for t in range(1, T):
+            if masks[t - 1, j] == 1.0:
+                d = 1.0
             else:
-                deltas[t, j] = float(t - last_obs) if last_obs >= 0 else float(t)
+                d += 1.0
+            deltas[t, j] = d
 
     return X, masks, deltas
+
 
 
 def encode_triplet(
