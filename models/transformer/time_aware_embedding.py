@@ -110,15 +110,24 @@ class TimeAwareEmbedding(nn.Module):
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         if self.use_time2vec:
             values = x[:, :, :self.F]
-            masks = x[:, :, self.F:2*self.F]
+            masks  = x[:, :, self.F:2*self.F]
             deltas = x[:, :, 2*self.F:]
-            
+
+            # Apply ablation masking logic
+            if self.ablation_mode == "mask_only":
+                # Zero out time deltas (only values + masks active)
+                deltas = torch.zeros_like(deltas)
+            elif self.ablation_mode == "delta_only":
+                # Zero out observation masks (only values + deltas active)
+                masks = torch.zeros_like(masks)
+
             delta_emb = self.time2vec(deltas)
             x_proj_in = torch.cat([values, masks, delta_emb], dim=-1)
             out = self.proj(x_proj_in) * math.sqrt(self.d_model)
         else:
             out = self.proj(x) * math.sqrt(self.d_model)
-            
+
         out = self.layer_norm(out)
         out = self.pos_encoder(out)
         return out
+

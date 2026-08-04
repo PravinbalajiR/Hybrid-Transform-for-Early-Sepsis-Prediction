@@ -439,20 +439,26 @@ def main():
     
     # 4. Final Evaluation on Test Set
     print("\n[Trainer] Evaluating Best Model on Test Set...")
+    print(f"  [Ablation Mode] Active ablation: {ablation_mode}")
     # Load Best Model
     best_ckpts = list(best_ckpt_path.glob("best_*.pt"))
     if best_ckpts:
         best_ckpt = max(best_ckpts, key=os.path.getctime)
+        print(f"  [Checkpoint] Loading best checkpoint: {best_ckpt}")
         ckpt = torch.load(best_ckpt, map_location=device)
         model.load_state_dict(ckpt["model"])
-        
+    else:
+        print("  [Checkpoint] WARNING: No checkpoint found! Using current model weights.")
+
     test_loss, test_labels, test_probas = evaluate_epoch(model, test_loader, criterion, device, input_key)
-    
+
     # Re-evaluate optimal threshold on val, apply to test
     _, val_labels, val_probas = evaluate_epoch(model, val_loader, criterion, device, input_key)
-    best_thresh, _ = find_optimal_threshold(val_labels, val_probas, n_thresholds=20)
-    
+    best_thresh, val_best_u = find_optimal_threshold(val_labels, val_probas, n_thresholds=20)
+    print(f"  [Threshold] Optimal threshold on Validation set: {best_thresh:.4f} (Val Utility: {val_best_u:.4f})")
+
     test_preds = [(p >= best_thresh).astype(int) for p in test_probas]
+
     test_utility = compute_utility_score(test_labels, test_preds)
     
     report = full_evaluation_report(
