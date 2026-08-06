@@ -41,6 +41,18 @@ def build_model(config: dict, device: torch.device) -> nn.Module:
     layers = config.get("layers", 3)
     ablation_mode = config.get("ablation_mode", "none")
     
+    if "m3f" in model_type or "m3_final" in model_type:
+        from models.transformer.m3f_model import M3FinalModel
+        return M3FinalModel(
+            input_dim=102,
+            num_features=config.get("num_features", 34),
+            d_model=config.get("d_model", hidden_dim),
+            nhead=num_heads,
+            num_layers=layers,
+            dim_feedforward=config.get("dim_feedforward", 128),
+            dropout=config.get("dropout", 0.1),
+        ).to(device)
+
     if "m3_recovered" in model_type:
         from models.transformer.m3_recovered_model import M3RecoveredModel
         return M3RecoveredModel(
@@ -51,6 +63,7 @@ def build_model(config: dict, device: torch.device) -> nn.Module:
             dim_feedforward=config.get("dim_feedforward", 128),
             dropout=config.get("dropout", 0.1),
         ).to(device)
+
 
     if "m2" in model_type or "plain" in model_type:
         input_dim = 34
