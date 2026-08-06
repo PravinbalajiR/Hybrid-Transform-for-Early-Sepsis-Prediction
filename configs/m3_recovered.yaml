@@ -1,0 +1,18 @@
+# Configuration for M3 Recovered Model (Historical TACT Architecture)
+model: m3_recovered
+input_dim: 102
+d_model: 64
+dim_feedforward: 128
+nhead: 4
+num_layers: 3
+dropout: 0.1
+
+# Optimization
+learning_rate: 0.0001
+weight_decay: 0.0001
+batch_size: 32
+epochs: 30
+patience: 10
+
+# Paths
+experiment_name: "m3_recovered"

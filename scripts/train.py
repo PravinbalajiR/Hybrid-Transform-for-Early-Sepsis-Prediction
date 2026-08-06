@@ -41,15 +41,16 @@ def build_model(config: dict, device: torch.device) -> nn.Module:
     layers = config.get("layers", 3)
     ablation_mode = config.get("ablation_mode", "none")
     
-    if "m4" in model_type or "hybrid" in model_type:
-        model = SepsisHybridModel(
-            input_dim=34 * 3,
-            d_model=hidden_dim,
+    if "m3_recovered" in model_type:
+        from models.transformer.m3_recovered_model import M3RecoveredModel
+        return M3RecoveredModel(
+            input_dim=102,
+            d_model=config.get("d_model", hidden_dim),
             nhead=num_heads,
             num_layers=layers,
-            ablation_mode=ablation_mode,
+            dim_feedforward=config.get("dim_feedforward", 128),
+            dropout=config.get("dropout", 0.1),
         ).to(device)
-        return model
 
     if "m2" in model_type or "plain" in model_type:
         input_dim = 34
@@ -57,6 +58,7 @@ def build_model(config: dict, device: torch.device) -> nn.Module:
         input_dim = 34 * 3
     else:
         raise ValueError(f"Unknown model type: {model_type}")
+
 
     model = TACTModel(
         input_dim=input_dim,
