@@ -121,12 +121,13 @@ class TimeAwareEmbedding(nn.Module):
                 # Zero out observation masks (only values + deltas active)
                 masks = torch.zeros_like(masks)
 
-            # Apply log1p temporal scaling to compress continuous ICU time intervals [0, 50+h]
-            scaled_deltas = torch.log1p(deltas)
+            # Convert elapsed time from hours to days to preserve linear interpretation while balancing embedding magnitude
+            scaled_deltas = deltas / 24.0
 
             delta_emb = self.time2vec(scaled_deltas)
             x_proj_in = torch.cat([values, masks, delta_emb], dim=-1)
             out = self.proj(x_proj_in) * math.sqrt(self.d_model)
+
 
         else:
             out = self.proj(x) * math.sqrt(self.d_model)
