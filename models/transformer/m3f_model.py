@@ -1,14 +1,15 @@
 """
 m3f_model.py
 ------------
-M3-F: Final Time-Aware Transformer for Early Sepsis Prediction.
+M3-F: Final Time-Aware Transformer with Time-Dependent Adaptive Fusion & Residual Log-Time Encoding.
 
-Novel Architecture:
+Key Architectural Enhancements:
   1. Value Embedding: Linear(34 -> 64) + LayerNorm + Dropout
   2. Mask Embedding: Linear(34 -> 64) + LayerNorm + Dropout
-  3. Non-Periodic Log Time Encoder: log1p(delta) -> Linear(34 -> 64) -> GELU -> Linear(64 -> 64) -> LayerNorm
-  4. Adaptive Softmax Fusion: Softmax(Linear([E_v, E_m, E_t])) -> [alpha, beta, gamma] (alpha + beta + gamma = 1.0)
-     E_fused = alpha * E_v + beta * E_m + gamma * E_t
+  3. Residual Log-Time Encoder: log1p(delta) -> Linear(34 -> 64) + GELU + Linear(64 -> 64) + Residual + LayerNorm
+  4. Time-Dependent Adaptive Fusion:
+     Computes hourly weights [alpha(t), beta(t), gamma(t)] via Softmax over concatenated [E_v(t), E_m(t), E_t(t)].
+     E_fused(t) = alpha(t) * E_v(t) + beta(t) * E_m(t) + gamma(t) * E_t(t)
   5. LayerNorm + Sinusoidal Positional Encoding
   6. Transformer Encoder: 3 Layers, 4 Heads, d_model=64, dim_feedforward=128
   7. GELU Prediction Head: Linear(64 -> 32) -> GELU -> Dropout -> Linear(32 -> 1)
@@ -62,27 +63,28 @@ class MaskEmbedding(nn.Module):
         return self.dropout(out)
 
 
-class LogTimeEncoder(nn.Module):
+class ResidualLogTimeEncoder(nn.Module):
     def __init__(self, num_features: int = 34, d_model: int = 64, dropout: float = 0.1):
         super().__init__()
+        self.proj = nn.Linear(num_features, d_model)
         self.mlp = nn.Sequential(
-            nn.Linear(num_features, d_model),
             nn.GELU(),
             nn.Linear(d_model, d_model),
-            nn.LayerNorm(d_model),
-            nn.Dropout(dropout)
         )
+        self.layer_norm = nn.LayerNorm(d_model)
+        self.dropout = nn.Dropout(dropout)
 
     def forward(self, deltas: torch.Tensor) -> torch.Tensor:
-        # Non-periodic log transformation: log1p(t)
         log_deltas = torch.log1p(torch.clamp(deltas, min=0.0))
-        return self.mlp(log_deltas)
+        h = self.proj(log_deltas)
+        out = h + self.mlp(h)  # Residual connection
+        return self.dropout(self.layer_norm(out))
 
 
-class AdaptiveFusion(nn.Module):
+class TimeDependentAdaptiveFusion(nn.Module):
     def __init__(self, d_model: int = 64):
         super().__init__()
-        # Attention projection over concatenated [E_v, E_m, E_t] -> 3 weights
+        # Dynamic hourly gating over concatenated [E_v(t), E_m(t), E_t(t)] -> 3 weights per hour
         self.weight_gate = nn.Sequential(
             nn.Linear(d_model * 3, 32),
             nn.GELU(),
@@ -92,20 +94,15 @@ class AdaptiveFusion(nn.Module):
     def forward(
         self, E_v: torch.Tensor, E_m: torch.Tensor, E_t: torch.Tensor
     ) -> tuple[torch.Tensor, torch.Tensor]:
-        # Shape of concatenated: (B, T, d_model * 3)
-        cat_emb = torch.cat([E_v, E_m, E_t], dim=-1)
-        
-        # Calculate raw gating logits (B, T, 3)
-        gate_logits = self.weight_gate(cat_emb)
-        
-        # Softmax over the 3 channels -> (alpha, beta, gamma), sum = 1.0
-        weights = F.softmax(gate_logits, dim=-1)  # (B, T, 3)
+        cat_emb = torch.cat([E_v, E_m, E_t], dim=-1) # (B, T, d_model * 3)
+        gate_logits = self.weight_gate(cat_emb)       # (B, T, 3)
+        weights = F.softmax(gate_logits, dim=-1)       # (B, T, 3) -> alpha(t), beta(t), gamma(t)
         
         alpha = weights[..., 0:1]  # (B, T, 1)
         beta  = weights[..., 1:2]  # (B, T, 1)
         gamma = weights[..., 2:3]  # (B, T, 1)
 
-        # Adaptive Weighted Combination
+        # Time-Dependent Adaptive Weighted Combination
         E_fused = alpha * E_v + beta * E_m + gamma * E_t
         return E_fused, weights
 
@@ -125,9 +122,9 @@ class M3FinalModel(nn.Module):
         self.num_features = num_features
         self.value_embedding = ValueEmbedding(num_features=num_features, d_model=d_model, dropout=dropout)
         self.mask_embedding  = MaskEmbedding(num_features=num_features, d_model=d_model, dropout=dropout)
-        self.time_encoder    = LogTimeEncoder(num_features=num_features, d_model=d_model, dropout=dropout)
+        self.time_encoder    = ResidualLogTimeEncoder(num_features=num_features, d_model=d_model, dropout=dropout)
         
-        self.adaptive_fusion = AdaptiveFusion(d_model=d_model)
+        self.adaptive_fusion = TimeDependentAdaptiveFusion(d_model=d_model)
         self.fusion_norm     = nn.LayerNorm(d_model)
         self.pos_encoder     = PositionalEncoding(d_model=d_model)
 
@@ -148,7 +145,10 @@ class M3FinalModel(nn.Module):
         )
 
     def forward(
-        self, x: torch.Tensor, padding_mask: torch.Tensor | None = None
+        self,
+        x: torch.Tensor,
+        padding_mask: torch.Tensor | None = None,
+        return_fusion_weights: bool = False
     ) -> torch.Tensor | tuple[torch.Tensor, torch.Tensor]:
         # Split triplet input (B, T, 102) into Values (34), Masks (34), Deltas (34)
         v = x[..., 0 : self.num_features]
@@ -159,11 +159,14 @@ class M3FinalModel(nn.Module):
         E_m = self.mask_embedding(m)
         E_t = self.time_encoder(d)
 
-        # Adaptive Fusion
+        # Time-Dependent Adaptive Fusion -> [alpha(t), beta(t), gamma(t)]
         E_fused, weights = self.adaptive_fusion(E_v, E_m, E_t)
         E_norm = self.pos_encoder(self.fusion_norm(E_fused))
 
         # Transformer Sequence Processing
         out = self.transformer_encoder(E_norm, src_key_padding_mask=padding_mask)
         logits = self.classifier(out).squeeze(-1)
+
+        if return_fusion_weights:
+            return logits, weights
         return logits
