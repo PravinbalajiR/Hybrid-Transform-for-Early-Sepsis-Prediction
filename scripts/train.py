@@ -251,14 +251,21 @@ def main():
         # We don't exit here so local testing works, but it's strongly discouraged.
 
     # 1. Load Precomputed Cached Dataset
-    cache_path = Path(__file__).parent.parent / "data" / "processed" / "full_dataset_cache.pt"
-    if not cache_path.exists():
-        # Fallback for Colab outer directory structure
-        outer_cache_path = Path(__file__).parent.parent.parent / "processed" / "full_dataset_cache.pt"
-        if outer_cache_path.exists():
-            cache_path = outer_cache_path
-        else:
-            raise FileNotFoundError(f"Cached dataset not found at {cache_path} or {outer_cache_path}. Run preprocessing first.")
+    possible_cache_paths = [
+        Path(__file__).parent.parent / "data" / "processed" / "full_dataset_cache.pt",
+        Path("/content/drive/MyDrive/Sepsis-Hybrid-Transformer/processed/full_dataset_cache.pt"),
+        Path("/content/drive/MyDrive/Sepsis-Hybrid-Transformer/data/processed/full_dataset_cache.pt"),
+        Path(__file__).parent.parent.parent / "processed" / "full_dataset_cache.pt",
+    ]
+    cache_path = None
+    for p in possible_cache_paths:
+        if p.exists():
+            cache_path = p
+            break
+            
+    if cache_path is None:
+        raise FileNotFoundError("Cached dataset not found in data/processed/ or Google Drive. Please mount Drive or copy full_dataset_cache.pt.")
+
             
     print(f"[Trainer] Loading cached dataset tensors in memory from {cache_path}...")
     cache_dict = torch.load(cache_path)
