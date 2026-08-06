@@ -1,3 +1,6 @@
+# M3-mask — Ablation: Values + Mask only (no time-delta)
+# Tests whether missingness patterns alone improve over M2
+experiment_name: m3_mask_only
 model: m3_mask_only
 epochs: 30
 batch_size: 32

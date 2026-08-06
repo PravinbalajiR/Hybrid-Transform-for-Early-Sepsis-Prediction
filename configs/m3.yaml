@@ -1,4 +1,9 @@
+# M3 — Full Triplet Time-Aware Transformer
+# Input: [Values (34) | Mask (34) | log1p(Delta) (34)] = 102-dim
+# Architecture: identical to M2, only input dimension changes
+# Ablation: none → full triplet (all three channels active)
 model: m3
+experiment_name: m3
 epochs: 30
 batch_size: 32
 learning_rate: 0.0001
@@ -8,4 +13,4 @@ hidden_dim: 64
 num_heads: 4
 layers: 3
 dropout: 0.1
-ablation_mode: mask_delta
+ablation_mode: none

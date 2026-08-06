@@ -1,3 +1,6 @@
+# M3-delta — Ablation: Values + log1p(Delta) only (no missingness mask)
+# Tests whether sampling frequency alone improves over M2
+experiment_name: m3_delta_only
 model: m3_delta_only
 epochs: 30
 batch_size: 32

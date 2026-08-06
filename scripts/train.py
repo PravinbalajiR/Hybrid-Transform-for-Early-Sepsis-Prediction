@@ -67,20 +67,22 @@ def build_model(config: dict, device: torch.device) -> nn.Module:
 
     if "m2" in model_type or "plain" in model_type:
         input_dim = 34
-    elif "m3" in model_type or "time_aware" in model_type or "tact" in model_type:
+    elif any(k in model_type for k in ["m3", "time_aware", "tact"]):
+        # All M3 variants (m3, m3_mask_only, m3_delta_only) use triplet input
         input_dim = 34 * 3
     else:
         raise ValueError(f"Unknown model type: {model_type}")
-
 
     model = TACTModel(
         input_dim=input_dim,
         d_model=hidden_dim,
         nhead=num_heads,
         num_layers=layers,
+        dim_feedforward=config.get("dim_feedforward", hidden_dim * 2),
+        dropout=config.get("dropout", 0.1),
         ablation_mode=ablation_mode,
     ).to(device)
-    
+
     return model
 
 
