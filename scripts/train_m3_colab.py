@@ -246,7 +246,7 @@ def train_variant(variant, train_loader, val_loader, test_loader,
     optimizer = AdamW(model.parameters(), lr=hp["lr"],
                       weight_decay=hp["weight_decay"])
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-        optimizer, mode="max", factor=0.5, patience=3, verbose=False
+        optimizer, mode="max", factor=0.5, patience=3
     )
     scaler    = GradScaler()
 
