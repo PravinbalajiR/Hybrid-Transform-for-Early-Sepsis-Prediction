@@ -71,7 +71,8 @@ class M3RecoveredModel(nn.Module):
             nn.Linear(32, 1),
         )
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: torch.Tensor, padding_mask: torch.Tensor | None = None) -> torch.Tensor:
         emb = self.embedding(x)
-        out = self.transformer_encoder(emb)
+        out = self.transformer_encoder(emb, src_key_padding_mask=padding_mask)
         return self.fc_out(out)
+
