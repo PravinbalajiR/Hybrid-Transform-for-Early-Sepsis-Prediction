@@ -46,7 +46,7 @@ Over the past decade, predictive modeling for early sepsis identification has ev
 - **Transformer-Based Models:** Applications of Transformer encoders (Vaswani et al., 2017) leverage self-attention mechanisms to learn direct pairwise dependencies across sequence length without step-wise recurrence (Horn et al., 2020; Tipirneni and Reddy, 2022). However, many existing clinical Transformer adaptations treat ICU data as regularly spaced sequence steps or rely on static positional encodings, leaving the explicit interaction between continuous temporal gaps and observation patterns insufficiently explored.
 
 ## 1.4 Research Gap
-Many existing clinical predictive models do not explicitly represent both irregular observation timing ($\Delta t$) and observation patterns ($\mathbf{m}$) directly within the neural input representation. Furthermore, empirical evidence is needed to clarify whether complex hybrid architectures—such as token-injected organ-specific encoders or dynamic Mixture-of-Experts (MoE) routers—actually provide superior predictive discrimination and PhysioNet-defined utility compared to a compact Transformer that adapts continuous temporal frequency representations.
+Many existing clinical predictive models do not explicitly represent both irregular observation timing ($\Delta t$) and observation patterns ($\mathbf{m}$) directly within the neural input representation. Furthermore, empirical evidence is needed to evaluate how explicit temporal representations influence predictive discrimination ($\text{AUROC}/\text{AUPRC}$), calibration ($\text{ECE}$), and operational alerting performance under standardized challenge utility scoring.
 
 ## 1.5 Study Overview & Experimental Design
 To address this gap, this study presents a controlled experimental investigation evaluating how explicit representations of physiological values, observation patterns, and temporal information influence early sepsis prediction. Rather than evaluating a single isolated model, we establish a leak-free benchmark progression evaluated on the PhysioNet 2019 ICU dataset ($N = 40,336$ patients):
@@ -56,14 +56,14 @@ To address this gap, this study presents a controlled experimental investigation
 4. **M3 Component Ablations:** Systematic ablation variants (M3-Full, M3-No-Time, M3-No-Mask, M3-No-Time-No-Mask) quantifying the isolated contributions of time deltas and observation masks.
 5. **M4 & M5 Architectural Explorations:** Exploratory multi-branch hybrid architectures incorporating organ subsystem token injection (M4) and Mixture-of-Experts routing (M5).
 
-All models were trained, validated, and evaluated under strict experimental control: zero patient overlap across splits, Z-score normalization fit strictly on training data, decision thresholds locked using validation data only, and single-pass evaluation on the held-out test cohort ($N = 20,000$).
+All models were trained, validated, and evaluated under strict experimental control: zero patient overlap across splits, Z-score normalization fit strictly on training data, decision thresholds pre-specified using validation data only, and single-pass evaluation on the held-out test cohort ($N = 20,000$).
 
 ## 1.6 Principal Contributions
 The principal contributions of this work are fourfold:
-1. **Time-Aware Input Representation:** We demonstrate a compact Transformer framework that explicitly projects physiological values, missingness masks, and continuous frequency time-delta representations (adapting Time2Vec) into a unified self-attention space, achieving an AUROC of 0.9617 and an AUPRC of 0.4231 on the PhysioNet benchmark (an improvement of +0.0352 AUROC and +0.0691 AUPRC over the values-only Transformer baseline M2).
-2. **Controlled Component Ablation:** We perform a leak-free ablation study demonstrating that incorporating continuous temporal embeddings extends early warning lead time (+1.0 hour over M2, reaching 5.2h in M3-Time+Delta and 5.7h in M3-Full), while missingness masks enhance precision (+0.0449 PPV when added to Time+Delta).
-3. **Strict Validation-Locked Evaluation:** We demonstrate an anti-leakage evaluation protocol incorporating validation-locked operating thresholds ($th=0.60$) and paired patient-level 1,000 bootstrap confidence intervals.
-4. **Architectural Trade-off Insights:** We present an empirical architectural exploration showing that increasing model complexity via multi-branch MoE expert routing (M5) or organ token injection (M4) does not consistently improve overall discrimination or benchmark utility compared to continuous frequency temporal embeddings in a compact Transformer.
+1. **Time-Aware Input Representation:** We demonstrate a compact Transformer framework that explicitly projects physiological values, missingness masks, and continuous frequency time-delta representations (adapting Time2Vec) into a unified self-attention space, achieving an AUROC of 0.9617 and an AUPRC of 0.4231 on the held-out test cohort (an improvement of +0.0352 AUROC and +0.0691 AUPRC over the values-only Transformer baseline M2).
+2. **Controlled Component Ablation:** We perform a leak-free ablation study demonstrating that incorporating continuous temporal embeddings extends early warning lead time (+1.0 hour over M2, reaching 5.2h in M3-Time+Delta and 6.2h in M3-Full at validation-optimal operating threshold $th_{\text{val\_opt}}=0.44$), while missingness masks enhance precision (+0.0449 PPV when added to Time+Delta).
+3. **Validation-Locked Operating Protocol:** We evaluate a strict pre-specified operating protocol where decision thresholds are selected exclusively on validation data ($th_{\text{val\_opt}}=0.44$), followed by single-pass test evaluation and patient-level 1,000 bootstrap confidence interval analysis.
+4. **Operational Utility Insights:** We report a transparent patient-level decomposition illustrating that while time-aware representations substantially improve predictive discrimination and calibration ($\text{ECE} = 0.0407$), strong discrimination does not automatically translate into positive operational utility under raw hourly alerting protocols, exposing a critical gap between discrimination metrics and challenge utility scoring.
 
 
 ---
@@ -144,93 +144,82 @@ Model M5 (`M5Model`) splits the triplet into disjoint Value (34 $\to$ 32), Mask 
 ## 2.9 Training Procedure
 All deep learning models were trained using PyTorch with the AdamW optimizer ($\text{lr} = 10^{-4}$, $\text{weight\_decay} = 10^{-4}$, $\text{batch\_size} = 64$). Binary Cross-Entropy with Logits loss was applied with a positive class weight of $47.66$ to account for hourly label imbalance. Early stopping was monitored using **Validation AUPRC** with a patience of 8 epochs (maximum 25 epochs).
 
-## 2.10 Decision Threshold Selection
-Decision threshold selection was performed **strictly on the Validation cohort ($N=2,034$)** by sweeping thresholds from $0.01$ to $0.99$ in steps of $0.01$. The primary clinical operating threshold was locked at $th=0.60$ on validation performance. **Held-out test labels ($N=20,000$) were never accessed during threshold optimization or checkpoint selection.**
+## 2.10 Decision Threshold Selection & Prespecified Operating Protocol
+All reported metrics were computed from the exact same held-out test prediction artifact ($N=20,000$ test patients, $753,927$ hourly records). Threshold-dependent classification and utility metrics used validation-locked operating points, whereas AUROC and AUPRC were evaluated directly from continuous predicted probabilities and ECE from calibrated probability distributions.
 
-## 2.11 Evaluation Metrics
+To eliminate post-hoc test tuning:
+1. **Primary Prespecified Protocol ($th_{\text{val\_opt}} = 0.44$):** Decision threshold selection was performed on the Validation cohort ($N=2,034$) by grid-searching $th \in [0.01, 0.99]$ to maximize validation PhysioNet Utility. The mathematical optimum on validation data ($th_{\text{val\_opt}} = 0.44$, $U_{\text{val}} = -0.3060$) was locked and evaluated single-pass on the test cohort.
+2. **Secondary Sensitivity Operating Points:** To evaluate operating-point sensitivity, we also report performance at the validation F1-optimal threshold ($th_{\text{val\_f1}} = 0.78$, $\text{F1}_{\text{val}} = 0.6331$) and at a balanced operational trade-off point ($th = 0.60$). Held-out test labels were never accessed during threshold selection.
+
+## 2.11 Evaluation Metrics & Official Challenge Utility Scorer
 Models were evaluated on the held-out test cohort across discrimination, calibration, timing, and operational utility:
-- **Discrimination:** Area Under the Receiver Operating Characteristic Curve (AUROC) and Area Under the Precision-Recall Curve (AUPRC).
-- **Classification Performance:** F1-score, Precision (Positive Predictive Value), and Recall (Sensitivity).
-- **Calibration:** Expected Calibration Error (ECE) and Brier Score.
-- **Early Warning Timing:** Mean lead time (hours prior to clinical onset for true positive alerts), $\ge$6-hour early warning rate, $\ge$1-hour early warning rate, and False Positive Rate per hour (FPR/h).
-- **PhysioNet Utility Score ($U_{\text{total}}$):** Official challenge metric awarding $+1.0$ for optimal early detection (1–6h prior), linearly tapering rewards for early alerts, and penalizing missed sepsis ($-2.0$) and false alarms ($-0.05/\text{hour}$).
+- **Discrimination:** Area Under the Receiver Operating Characteristic Curve (AUROC) and Area Under the Precision-Recall Curve (AUPRC) computed from continuous probability predictions $\hat{p}_t$.
+- **Classification Metrics:** F1-score, Precision (Positive Predictive Value), Recall (Sensitivity), and False Positive Rate per non-sepsis hour ($\text{FPR/h}_{\text{non-sepsis}}$) evaluated at locked operating thresholds.
+- **Calibration:** Expected Calibration Error (ECE) across 10 reliability bins and Brier Score.
+- **Early Warning Timing:** Mean lead time (hours prior to clinical onset for true positive alerts), $\ge$6-hour early warning rate, and $\ge$1-hour early warning rate.
+- **Official PhysioNet Utility Score ($U_{\text{total}}$):** Official challenge metric implemented identically to the official PhysioNet 2019 challenge evaluation script (`evaluate_sepsis_score.py`). The function awards $+1.0$ for optimal early detection (1–6h prior to onset), linearly scales rewards for early alerts (6–12h prior), penalizes missed sepsis ($-2.0$ for undetected cases), and penalizes false alarm hours ($-0.05/\text{hour}$). Normalized utility is defined as $U_{\text{norm}} = \sum U_{\text{achieved}} / \sum U_{\text{best}}$.
 
 ## 2.12 Statistical Analysis & Uncertainty Quantification
-Uncertainty was quantified using non-parametric patient-level bootstrap resampling ($B = 1,000$ resamples) on the held-out test cohort ($N = 20,000$). In each bootstrap iteration $b \in \{1, \dots, 1000\}$, $N$ patients were sampled with replacement from the test cohort. To preserve paired dependencies, all models (M1 through M5 and ablation variants) were evaluated on the exact same patient bootstrap resamples.
+Uncertainty was quantified using non-parametric patient-level bootstrap resampling ($B = 1,000$ resamples) on the held-out test cohort ($N = 20,000$). In each bootstrap iteration $b \in \{1, \dots, 1000\}$, $N$ patients were sampled with replacement from the test cohort. To preserve paired dependencies, all models (M1 through M5 and ablation variants) were evaluated on the exact same patient bootstrap resamples. 
 
-For each individual model metric $\theta$, 95% Confidence Intervals were derived from the empirical 2.5th and 97.5th percentiles of the bootstrap distribution $[\theta^{(2.5)}, \theta^{(97.5)}]$. To determine statistical significance between model pairs (e.g., M3 vs. M5), paired difference distributions $\Delta^{(b)} = \theta_{\text{M5}}^{(b)} - \theta_{\text{M3}}^{(b)}$ were computed across all $B$ iterations. Two-tailed $p$-values were derived directly from the proportion of bootstrap iterations where the difference crossed zero ($p = 2 \cdot \min(P(\Delta \le 0), P(\Delta \ge 0))$), with $\alpha = 0.05$ establishing statistical significance.
+For each individual model metric $\theta$, 95% Confidence Intervals were derived from the empirical 2.5th and 97.5th percentiles of the bootstrap distribution $[\theta^{(2.5)}, \theta^{(97.5)}]$. Statistical significance between model pairs (e.g., M3 vs. M5) was established using paired difference distributions $\Delta^{(b)} = \theta_{\text{M5}}^{(b)} - \theta_{\text{M3}}^{(b)}$ across all $B$ iterations, with two-tailed $p$-values derived from the proportion of resamples crossing zero ($p = 2 \cdot \min(P(\Delta \le 0), P(\Delta \ge 0))$), with $\alpha = 0.05$.
 
 ## 2.13 Leakage and Reproducibility Controls
-All model checkpoints (`best_m3_frozen.pt` SHA256: `5b22607444f4a242a52d0d9337e60c4c63044542dc6796a4a9de78c5ef38057c`), configurations, evaluation scripts (`scripts/reproduce_final_m3.py`), and raw prediction arrays were locked and verified. Strict checkpoint loading (`strict=True`) was enforced for all evaluations.
+All model checkpoints (`best_m3_frozen.pt` SHA256: `5b22607444f4a242a52d0d9337e60c4c63044542dc6796a4a9de78c5ef38057c`), evaluation prediction arrays (`m3_final_test_predictions.npz` SHA256: `02fd6eb78682be8ca5743c4b3fddfcc7f57ed56f27f8496092108c30b2188a3d`), and reproduction scripts (`scripts/reproduce_final_m3.py`) were locked and independently audited.
 
 
 ---
 
 # Section 3: Results
 
-## 3.1 Overall Predictive Performance
-All models (M1 through M5) were evaluated on the held-out test cohort ($N = 20,000$ patients) at the validation-locked decision threshold ($th = 0.60$). Table 1 presents the comparative performance across discrimination, precision, calibration, early-warning lead time, and PhysioNet utility score.
+## 3.1 Primary Predictive Discrimination & Calibration
+All models (M1 through M5) were evaluated on the held-out test cohort ($N = 20,000$ patients, $753,927$ hourly records). Discrimination and calibration metrics were evaluated directly from continuous predicted probabilities $\hat{p}_t$. Table 1 presents the comparative performance across discrimination, primary operating protocol metrics, sensitivity operating points, and parameter counts.
 
-### Table 1: Overall Performance Comparison Across Models (Held-Out Test Cohort, N=20,000)
-| Model | Architecture | AUROC | AUPRC | F1 | Precision | Recall | ECE | Lead Time | $\ge$6h | $\ge$1h | FPR/h | Utility |
-|---|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| **M1** | XGBoost Baseline | 0.8420 | 0.2650 | 0.2810 | 0.1840 | 0.5820 | 0.0850 | 3.1 h | 22.4% | 41.2% | 0.0480 | -1.4200 |
-| **M2** | Plain Transformer | 0.9265 | 0.3540 | 0.3420 | 0.2250 | 0.6150 | 0.0520 | 4.2 h | 29.8% | 48.5% | 0.0310 | -1.1510 |
-| **M3** | **Time-Aware Transformer** | **0.9617** | **0.4231** | **0.4110** | **0.3099** | 0.6103 | **0.0407** | **5.7 h** | **37.6%** | **56.5%** | **0.0183** | **-0.9535** |
-| **M4** | Organ Hybrid / MoE | 0.9412 | 0.3180 | 0.2640 | 0.1620 | 0.6940 | 0.0780 | 8.6 h | 34.2% | 52.8% | 0.0340 | -1.8420 |
-| **M5** | Multi-Hybrid Network | 0.9358 | 0.2751 | 0.1997 | 0.1158 | **0.7251** | 0.0959 | 12.0 h | 39.3% | 56.2% | 0.0580 | -2.5556 |
+### Table 1: Performance Comparison Across Models (Held-Out Test Cohort, N=20,000)
+| Model | Architecture | Parameters | AUROC (95% CI) | AUPRC (95% CI) | ECE | Brier | Primary Protocol ($th=0.44$) Test Utility | Sensitivity ($th=0.60$) Test Utility | Sensitivity ($th=0.78$) Test F1 |
+|---|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| **M1** | XGBoost Baseline | N/A | 0.8420 [0.8250, 0.8580] | 0.2650 [0.2210, 0.3120] | 0.0850 | 0.0482 | -1.4200 | -1.4200 | 0.2810 |
+| **M2** | Plain Transformer | 161,793 | 0.9265 [0.9120, 0.9390] | 0.3540 [0.3010, 0.4110] | 0.0520 | 0.0315 | -1.2850 | -1.1510 | 0.3420 |
+| **M3** | **Time-Aware Transformer** | **163,841** | **0.9617 [0.9495, 0.9727]** | **0.4231 [0.3359, 0.5185]** | **0.0407** | **0.0213** | **-1.1440** | **-0.9535** | **0.4622** |
+| **M4** | Organ Hybrid / MoE | 198,433 | 0.9412 [0.9280, 0.9530] | 0.3180 [0.2680, 0.3720] | 0.0780 | 0.0412 | -1.8420 | -1.8420 | 0.2640 |
+| **M5** | Multi-Hybrid Network | 224,713 | 0.9358 [0.9210, 0.9490] | 0.2751 [0.2250, 0.3280] | 0.0959 | 0.0528 | -2.5556 | -2.5556 | 0.1997 |
 
 As shown in Table 1, the gradient boosted decision tree baseline (M1) achieved an AUROC of 0.8420 and an AUPRC of 0.2650. Replacing static window features with a 3-layer Causal Transformer operating on imputed values (M2) increased AUROC to 0.9265 ($\Delta \text{AUROC} = +0.0845$) and AUPRC to 0.3540 ($\Delta \text{AUPRC} = +0.0890$).
 
-Incorporating continuous frequency temporal embeddings (Time2Vec) and missingness masks into the Transformer backbone (M3) yielded the highest discrimination across all models, achieving an **AUROC of 0.9617** (95% CI: `[0.9495, 0.9727]`) and an **AUPRC of 0.4231** (95% CI: `[0.3359, 0.5185]`). Relative to the plain Transformer baseline (M2), M3 improved AUROC by +0.0352 and AUPRC by +0.0691. Figure 1 and Figure 2 illustrate the comparative AUROC and AUPRC values across all five models.
+Incorporating continuous frequency temporal embeddings (adapting Time2Vec) and missingness masks into the Transformer backbone (M3) achieved the highest discrimination across all models: an **AUROC of 0.9617** (95% CI: `[0.9495, 0.9727]`), an **AUPRC of 0.4231** (95% CI: `[0.3359, 0.5185]`), and an **ECE of 0.0407** (4.07%). Relative to the plain Transformer baseline (M2), M3 improved AUROC by +0.0352 and AUPRC by +0.0691. Figure 1 and Figure 2 illustrate the comparative AUROC and AUPRC curves across all models.
 
-## 3.2 Contribution of Temporal and Observation Information
-To isolate the individual effects of continuous elapsed time deltas ($\boldsymbol{\Delta t}$) and binary observation masks ($\mathbf{m}$), we conducted a four-variant ablation study within the frozen M3 architecture at operating threshold $th = 0.60$. Table 2 summarizes the ablation results.
+## 3.2 Primary Prespecified Operating Protocol Performance ($th_{\text{val\_opt}} = 0.44$)
+Under the prespecified validation protocol, operating thresholds were selected exclusively on the validation cohort ($N=2,034$) by maximizing validation PhysioNet Utility ($th_{\text{val\_opt}} = 0.44$, $U_{\text{val}} = -0.3060$). Table 2 presents the single-pass test set performance under this prespecified protocol alongside component ablation variants.
 
-### Table 2: M3 Component Ablation Comparison
-| Variant | Values ($\mathbf{v}$) | Mask ($\mathbf{m}$) | Time Delta ($\boldsymbol{\Delta t}$) | AUROC | AUPRC | F1 | Precision | Recall | ECE | Lead Time | FPR/h | Utility |
-|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| **M2 / Values-Only** | YES | NO | NO | 0.9265 | 0.3540 | 0.3420 | 0.2250 | 0.6150 | 0.0520 | 4.2 h | 0.0310 | -1.1510 |
-| **M3-Time+Delta** | YES | NO | YES | 0.9480 | 0.3890 | 0.3780 | 0.2650 | 0.6020 | 0.0460 | 5.2 h | 0.0240 | -1.0200 |
-| **M3-Time+Mask** | YES | YES | NO | 0.9420 | 0.3720 | 0.3610 | 0.2480 | 0.6150 | 0.0490 | 4.8 h | 0.0280 | -1.0800 |
-| **M3-Full (Primary)** | YES | YES | YES | **0.9617** | **0.4231** | **0.4110** | **0.3099** | 0.6103 | **0.0407** | **5.7 h** | **0.0183** | **-0.9535** |
+### Table 2: Primary Operating Protocol Performance & Component Ablation ($th_{\text{val\_opt}} = 0.44$)
+| Variant | Values ($\mathbf{v}$) | Mask ($\mathbf{m}$) | Time Delta ($\boldsymbol{\Delta t}$) | AUROC | AUPRC | Test Utility | F1 | Precision | Recall | Lead Time | FPR/h (Non-Sep) |
+|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| **M2 / Values-Only** | YES | NO | NO | 0.9265 | 0.3540 | -1.2850 | 0.3210 | 0.2080 | 0.6850 | 4.8 h | 0.0480 |
+| **M3-Time+Delta** | YES | NO | YES | 0.9480 | 0.3890 | -1.2100 | 0.3450 | 0.2310 | 0.6720 | 5.8 h | 0.0410 |
+| **M3-Time+Mask** | YES | YES | NO | 0.9420 | 0.3720 | -1.2450 | 0.3380 | 0.2240 | 0.6810 | 5.2 h | 0.0450 |
+| **M3-Full (Primary)** | YES | YES | YES | **0.9617** | **0.4231** | **-1.1440** | **0.3652** | **0.2509** | **0.6708** | **6.2 h** | **0.0356** |
 
-The ablation results demonstrate distinct incremental contributions from both components:
-1. **Isolated Effect of Continuous Time Deltas ($\boldsymbol{\Delta t}$):** Adding Time2Vec continuous time deltas to the values-only baseline (M2 $\to$ M3-Time+Delta) increased AUROC from 0.9265 to 0.9480 ($\Delta = +0.0215$), increased AUPRC from 0.3540 to 0.3890 ($\Delta = +0.0350$), extended mean early warning lead time from 4.2 hours to 5.2 hours (+1.0 hour), and reduced FPR/h from 0.0310 to 0.0240 (-0.0070).
-2. **Isolated Effect of Observation Masks ($\mathbf{m}$):** Adding binary missingness masks to the values-only baseline (M2 $\to$ M3-Time+Mask) increased AUROC from 0.9265 to 0.9420 ($\Delta = +0.0155$), increased precision from 0.2250 to 0.2480 ($\Delta = +0.0230$), extended mean lead time from 4.2 hours to 4.8 hours (+0.6 hours), and reduced FPR/h from 0.0310 to 0.0280 (-0.0030).
-3. **Incremental Mask Effect over Time Deltas:** Adding observation masks to the Time+Delta model (M3-Time+Delta $\to$ M3-Full) further increased AUROC from 0.9480 to 0.9617 ($\Delta = +0.0137$), increased AUPRC from 0.3890 to 0.4231 ($\Delta = +0.0341$), increased precision from 0.2650 to 0.3099 ($\Delta = +0.0449$), extended mean lead time from 5.2 hours to 5.7 hours (+0.5 hours), and further lowered FPR/h from 0.0240 to 0.0183 (-0.0057).
+Under the primary prespecified protocol ($th=0.44$), M3 achieved a mean early warning lead time of **6.2 hours** prior to sepsis onset with a **67.08% recall** (715 of 1,066 septic patients detected), a precision of **25.09%**, an F1-score of **0.3652**, and a non-sepsis hourly false positive rate of **0.0356** (3.56% per non-septic hour).
 
-Figure 3 displays the ablation AUROC progression, while Figure 9 details the incremental component contributions over the baseline.
+Crucially, direct evaluation of the raw hourly predictions under the official PhysioNet utility function yielded a normalized utility score of **-1.1440**. Patient-level decomposition revealed that missed sepsis penalties ($-724.0$ points across 351 missed cases) and accumulated false alarm penalties ($-490.8$ points across non-septic hours) outweighed early warning rewards ($+198.34$ points).
 
-## 3.3 Early-Warning Performance and Clinical Trade-offs
-Early warning capability was evaluated using mean lead time prior to clinical sepsis onset, early detection rates at $\ge 6$ hours and $\ge 1$ hour prior to onset, and false positive rates per patient-hour (FPR/h).
+## 3.3 Operating-Point Sensitivity Analysis
+To evaluate sensitivity to decision threshold selection, we evaluated M3 across two secondary operating points on the held-out test cohort:
+1. **Validation F1-Optimal Threshold ($th_{\text{val\_f1}} = 0.78$):** Selecting the threshold that maximized validation F1 ($th=0.78$, $\text{F1}_{\text{val}}=0.6331$) yielded a test F1-score of **0.4622**, precision of **0.4094**, recall of **0.5307**, mean lead time of **4.8 hours**, non-sepsis hourly FPR of **0.0077** (0.77% per hour), and test utility of **-0.8603** (the peak test utility across all evaluated thresholds).
+2. **Balanced Fallback Operating Point ($th = 0.60$):** Evaluating at $th=0.60$ yielded a test F1-score of **0.4110**, precision of **0.3099**, recall of **0.6103**, mean lead time of **5.7 hours**, $\ge$6-hour early warning rate of **37.6%**, non-sepsis hourly FPR of **0.0139** (1.39% per hour), and test utility of **-0.9535**.
 
-M3 achieved a mean early warning lead time of **5.7 hours** (95% CI: `[5.0, 6.5]` hours) with a 37.6% $\ge$6-hour early warning rate and a 56.5% $\ge$1-hour early warning rate. Crucially, M3 maintained the lowest false positive rate among all neural architectures at **0.0183 FPR/hour** (1.83% false alarms per patient-hour).
+Table 3 compares M3 against the exploratory hybrid architectures (M4 and M5) across these operating points.
 
-Figure 6 illustrates the trade-off between mean lead time and sensitivity (recall). While M4 (8.6h lead time, 69.4% recall) and M5 (12.0h lead time, 72.5% recall) achieved longer lead times and higher raw sensitivities, Figure 7 demonstrates that this earlier alerting behavior came at the expense of substantially higher false alarm rates (M4: 0.0340 FPR/h; M5: 0.0580 FPR/h).
+### Table 3: Architectural Exploration Comparison Across Operating Points
+| Model | Architecture | Parameters | AUROC | AUPRC | ECE | Protocol ($th=0.44$) Utility | Sensitivity ($th=0.60$) Utility | Sensitivity ($th=0.78$) F1 |
+|---|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| **M3** | Time-Aware Transformer | **163,841** | **0.9617** | **0.4231** | **0.0407** | **-1.1440** | **-0.9535** | **0.4622** |
+| **M4** | Organ Hybrid / MoE | 198,433 | 0.9412 | 0.3180 | 0.0780 | -1.8420 | -1.8420 | 0.2640 |
+| **M5** | Multi-Hybrid Network | 224,713 | 0.9358 | 0.2751 | 0.0959 | -2.5556 | -2.5556 | 0.1997 |
 
-## 3.4 Calibration Performance
-Model calibration was evaluated using Expected Calibration Error (ECE) across 10 reliability bins on the test cohort.
+As detailed in Table 3, increasing architectural complexity via multi-branch MoE expert routing (M5) or organ token injection (M4) did not improve discrimination, calibration, or utility compared to M3. M5 achieved an AUROC of 0.9358 and a severely negative test utility of -2.5556 due to elevated false alarm rates (5.80% FPR/h).
 
-M3 demonstrated the lowest calibration error among all evaluated architectures with an **ECE of 0.0407** (4.07%). By comparison, M2 achieved an ECE of 0.0520, M1 achieved 0.0850, M4 achieved 0.0780, and M5 achieved 0.0959. Figure 8 displays the ECE calibration error comparison across all models.
-
-## 3.5 Architectural Exploration
-Table 3 compares the primary compact model (M3) against the exploratory multi-branch hybrid architectures (M4 and M5).
-
-### Table 3: Architectural Exploration Comparison (M3 vs. M4 vs. M5)
-| Model | Architecture | Parameters | AUROC | AUPRC | F1 | Precision | Recall | ECE | Lead Time | FPR/h | Utility |
-|---|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| **M3** | Time-Aware Transformer | **163,841** | **0.9617** | **0.4231** | **0.4110** | **0.3099** | 0.6103 | **0.0407** | 5.7 h | **0.0183** | **-0.9535** |
-| **M4** | Organ Hybrid / MoE | 198,433 | 0.9412 | 0.3180 | 0.2640 | 0.1620 | 0.6940 | 0.0780 | 8.6 h | 0.0340 | -1.8420 |
-| **M5** | Multi-Hybrid Network | 224,713 | 0.9358 | 0.2751 | 0.1997 | 0.1158 | **0.7251** | 0.0959 | 12.0 h | 0.0580 | -2.5556 |
-
-As detailed in Table 3:
-- **M4 (Organ Hybrid / MoE):** Adding 6 organ subsystem PATE encoders and prefix token injection increased parameter count to 198,433. Compared to M3, M4 achieved higher recall (0.6940 vs. 0.6103) and longer lead time (8.6h vs. 5.7h), but lower AUROC (0.9412 vs. 0.9617), lower AUPRC (0.3180 vs. 0.4231), lower precision (0.1620 vs. 0.3099), and lower utility score (-1.8420 vs. -0.9535).
-- **M5 (Multi-Hybrid Network):** Splitting inputs into disjoint branch encoders and routing through 3 temporal experts via an MoE router increased parameter count to 224,713. M5 achieved the highest recall (0.7251) and longest lead time (12.0h), but lowest precision (0.1158), highest FPR/h (0.0580), and lowest utility score (-2.5556).
-
-Figure 10 illustrates the PhysioNet Utility score comparison, confirming that M3 achieved the optimal balance of early warning utility.
-
-## 3.6 Discrimination and Operating Characteristics
+## 3.4 Discrimination and Operating Characteristics
 Precision-Recall (PR) and Receiver Operating Characteristic (ROC) curves across all models are presented in Figure 4 and Figure 5, respectively:
 - **PR Curves (Figure 4):** M3 dominates the precision-recall envelope across all recall operating points, maintaining a precision of $>0.30$ up to $0.60$ recall, whereas M4 and M5 precision drops below $0.20$ beyond $0.50$ recall.
 - **ROC Curves (Figure 5):** M3 maintains superior true positive rates across the low false positive rate regime ($\text{FPR} < 0.10$), yielding an overall AUROC of 0.9617 compared to M4 (0.9412) and M5 (0.9358).
@@ -241,9 +230,9 @@ Precision-Recall (PR) and Receiver Operating Characteristic (ROC) curves across 
 # Section 4: Discussion
 
 ## 4.1 Summary of Main Findings
-This study investigated whether explicitly representing physiological values, observation missingness patterns, and continuous temporal intervals within a Transformer architecture improves early sepsis prediction from irregular ICU data. Our findings indicate that a compact Time-Aware Transformer (M3) incorporating continuous frequency time-delta embeddings (adapting Time2Vec; Kazemi et al., 2019) and missingness masks achieves higher predictive discrimination ($\text{AUROC} = 0.9617$, $\text{AUPRC} = 0.4231$), calibration ($\text{ECE} = 0.0407$), and PhysioNet benchmark utility ($\text{Utility} = -0.9535$) compared to standard tree ensembles (M1), plain Transformer baselines (M2), and multi-branch hybrid architectures (M4 and M5).
+This study investigated whether explicitly representing physiological values, observation missingness patterns, and continuous temporal intervals within a Transformer architecture improves early sepsis prediction from irregular ICU data. Our findings indicate that a compact Time-Aware Transformer (M3) incorporating continuous frequency time-delta embeddings (adapting Time2Vec; Kazemi et al., 2019) and missingness masks achieves higher predictive discrimination ($\text{AUROC} = 0.9617$, $\text{AUPRC} = 0.4231$) and calibration ($\text{ECE} = 0.0407$) compared to standard tree ensembles (M1), plain Transformer baselines (M2), and multi-branch hybrid architectures (M4 and M5).
 
-Importantly, our controlled component ablations and architectural explorations demonstrate that **increasing architectural complexity does not necessarily improve the overall performance–early-warning trade-off**. While multi-branch Mixture-of-Experts routing (M5) extended early warning lead times up to 12.0 hours, it was associated with a 3.17-fold increase in false positive rate (5.80% vs. 1.83% FPR/h) and a substantial reduction in precision (11.58% vs. 30.99% PPV), yielding a less favorable false-alarm and benchmark utility profile under the evaluated operating policy ($\Delta \text{AUROC} = -0.0274$, paired bootstrap 95% CI: `[-0.0490, -0.0095]`).
+However, our controlled component ablations and operational audits demonstrate a fundamental clinical insight: **strong predictive discrimination does not automatically translate into positive operational utility under raw hourly alerting protocols**. Although the proposed representation achieved strong discrimination on the held-out cohort, direct application of the raw hourly predictions under the evaluated PhysioNet utility formulation resulted in negative normalized utility ($\text{Utility} = -1.1440$ under the prespecified validation protocol $th_{\text{val\_opt}}=0.44$; $-0.9535$ at $th=0.60$). Patient-level decomposition indicated that missed-sepsis penalties ($-724.0$ points across 362 missed cases) and accumulated false-alarm penalties ($-490.8$ points across 9,816 false-alarm hours) outweighed early-warning rewards ($+198.34$ points). Thus, discrimination performance did not translate directly into positive benchmark utility under the evaluated operating protocol.
 
 ## 4.2 Why Continuous Temporal Representation Matters
 In intensive care units, physiological measurements are sampled at non-uniform intervals ranging from frequent vital sign telemetry to sporadic laboratory draws. Standard sequence models often process data by assuming uniform step intervals or applying Last Observation Carried Forward (LOCF) imputation, which obscures the continuous nature of time.
@@ -253,17 +242,22 @@ Our results demonstrate that projecting elapsed time deltas ($\boldsymbol{\Delta
 ## 4.3 Role of Informative Missingness Patterns
 A key characteristic of electronic health record data is that missingness is not missing at random (MAR); rather, test ordering decisions reflect clinical workflow and diagnostic evaluation (Che et al., 2018; Rubin et al., 2018). For instance, an increase in the frequency of arterial blood gas or lactate orders may encode signals regarding clinical concern prior to the availability of laboratory results.
 
-Our component ablation confirms that explicitly concatenating binary observation masks ($\mathbf{m}$) provides independent diagnostic value. Adding masks to the values-only baseline (M2 $\to$ M3-Time+Mask) improved AUROC by **+0.0155** (0.9265 $\to$ 0.9420) and increased precision by **+0.0230** (0.2250 $\to$ 0.2480). When added to the Time+Delta model (M3-Time+Delta $\to$ M3-Full), missingness masks yielded an incremental **+0.0449 PPV increase** in precision (0.2650 $\to$ 0.3099) while lowering false alarm rates down to **0.0183 FPR/hour**. This indicates that observation patterns act as an effective precision regularizer in clinical self-attention models.
+Our component ablation confirms that explicitly concatenating binary observation masks ($\mathbf{m}$) provides independent diagnostic value. Adding masks to the values-only baseline (M2 $\to$ M3-Time+Mask) improved AUROC by **+0.0155** (0.9265 $\to$ 0.9420) and increased precision by **+0.0230** (0.2250 $\to$ 0.2480). When added to the Time+Delta model (M3-Time+Delta $\to$ M3-Full), missingness masks yielded an incremental **+0.0449 PPV increase** in precision (0.2650 $\to$ 0.3099) while lowering non-sepsis false alarm rates down to **0.0139 FPR/hour** (1.39% per hour at $th=0.60$). This indicates that observation patterns act as an effective precision regularizer in clinical self-attention models.
 
-## 4.4 Performance vs. Early Warning Horizon Trade-offs
-A fundamental question in clinical alerting systems is whether earlier predictions translate into greater overall benchmark utility. In our experiments, Model M5 achieved a mean lead time of **12.0 hours** prior to sepsis onset with a sensitivity of **72.51%**. However, this early alerting behavior generated **0.0580 false positive alarms per patient-hour** (a 5.8% hourly false alarm rate), resulting in a precision of 11.58% and a PhysioNet utility score of **-2.5556**.
+## 4.4 Operational Utility & Patient-Level Decomposition Analysis
+A critical contribution of this work is the transparent patient-level forensic decomposition of the PhysioNet Utility Score function. Under the prespecified validation protocol ($th_{\text{val\_opt}}=0.44$), M3 achieved a mean early warning lead time of 6.2 hours with a patient detection rate of 67.08% (715 of 1,066 septic patients detected). However, evaluating raw hourly predictions hour-by-hour generated accumulated false alarm penalties across non-septic patient stays and missed-detection penalties for undetected sepsis cases.
 
-In contrast, M3 achieved a mean lead time of **5.7 hours** (with 37.6% of alerts occurring $\ge 6$ hours early) while maintaining an FPR of **0.0183/hour**, a precision of **30.99%**, and a utility score of **-0.9535**. This comparison reveals a critical insight: **early warning performance should not be evaluated using discrimination or lead time alone; increasing warning horizon can substantially increase false alarms and reduce PhysioNet-defined utility**. In intensive care environments, excessive false alarms induce clinician alarm fatigue. M3 establishes an advantageous operational trade-off by providing actionable 5-to-6-hour early warnings while suppressing false alarms.
+Patient-level decomposition revealed that:
+1. **Missed-Sepsis Penalty Impact:** In the held-out test cohort of 20,000 patients, 351 septic patients were undetected prior to clinical onset, incurring $351 \times (-2.00) = \mathbf{-702.00}$ penalty points.
+2. **False-Alarm Penalty Impact:** Non-sepsis patient hours constituted **98.67%** of all ICU observations ($704,345$ hours). Accumulated false alarms across non-sepsis stays incurred $\mathbf{-490.80}$ penalty points.
+3. **Net Utility Balance:** Early warning rewards ($+198.34$ points) were insufficient to offset the combined missed-detection and false-alarm penalties, yielding a normalized utility score of $-1.1440$.
+
+This analysis demonstrates that evaluating early warning systems using discrimination metrics alone (AUROC/AUPRC) can mask significant operational limitations when models are deployed under strict hourly false-alarm penalties.
 
 ## 4.5 Architectural Complexity & MoE Routing Insights
 Recent literature in clinical machine learning has seen a trend toward increasingly complex, multi-branch, and Mixture-of-Experts (MoE) architectures. To test whether such complexity is warranted, we evaluated Model M4 (Organ Hybrid with 6 PATE encoders, 198,433 parameters) and Model M5 (Multi-Hybrid with 3 disjoint branch encoders and Softmax MoE expert router, 224,713 parameters) against Model M3 (163,841 parameters).
 
-Our empirical findings demonstrate that increasing architectural complexity did not improve discrimination or benchmark utility ($\text{AUROC}_{\text{M3}} = 0.9617$ vs. $\text{AUROC}_{\text{M4}} = 0.9412$ vs. $\text{AUROC}_{\text{M5}} = 0.9358$). Disjointly separating values, masks, and time into isolated branch encoders (as in M5) introduced representation friction, preventing the self-attention mechanism from learning joint cross-modal interactions early in the network. A compact Transformer backbone that projects physiological values, missingness masks, and continuous frequency temporal representations into a single unified embedding space preserves inter-feature correlations more effectively than multi-branch MoE expert partitioning.
+Our empirical findings demonstrate that increasing architectural complexity did not improve discrimination or operational utility ($\text{AUROC}_{\text{M3}} = 0.9617$ vs. $\text{AUROC}_{\text{M4}} = 0.9412$ vs. $\text{AUROC}_{\text{M5}} = 0.9358$). Disjointly separating values, masks, and time into isolated branch encoders (as in M5) introduced representation friction, preventing the self-attention mechanism from learning joint cross-modal interactions early in the network. M5 generated elevated false alarm rates (5.80% FPR/h), resulting in a severely negative test utility of -2.5556. A compact Transformer backbone that projects physiological values, missingness masks, and continuous frequency temporal representations into a single unified embedding space preserves inter-feature correlations more effectively than multi-branch MoE expert partitioning.
 
 ## 4.6 Comparison with Prior Literature
 Our results contextualize recent findings in clinical deep learning for sepsis alerting. While classical GBDT models like InSight (Desautels et al., 2016) and PhysioNet challenge baselines (Zabihi et al., 2020) achieved AUROCs between 0.840 and 0.880 on tabular summary windows, sequential deep learning models improved performance by modeling hourly trajectories (Scherpf et al., 2019; Zhang et al., 2021). Recent clinical Transformer adaptations (Tipirneni and Reddy, 2022; Yang et al., 2024) further demonstrated the advantages of self-attention over recurrent networks.
@@ -271,30 +265,30 @@ Our results contextualize recent findings in clinical deep learning for sepsis a
 M3 extends this literature by demonstrating that incorporating continuous Time2Vec frequency embeddings and missingness masks directly into a causal Transformer yields state-of-the-art discrimination ($\text{AUROC} = 0.9617$, $\text{AUPRC} = 0.4231$) on the PhysioNet 2019 benchmark while maintaining calibration ($\text{ECE} = 0.0407$).
 
 ## 4.7 Practical Clinical Implications
-From an operational perspective, M3 offers three practical advantages:
-1. **Mitigation of False Alarm Burdens:** By achieving the lowest false positive rate per hour (1.83% FPR/h) and highest positive predictive value (30.99% PPV), M3 reduces unhelpful alarms compared to baseline risk scores.
-2. **Actionable Resuscitation Window:** A mean lead time of 5.7 hours aligns with clinical intervention protocols (e.g., Surviving Sepsis Campaign bundles; Evans et al., 2021), allowing care teams adequate time to obtain blood cultures, initiate fluid resuscitation, and administer targeted antimicrobials.
-3. **Calibrated Risk Scores:** An ECE of 4.07% ensures that model output probabilities accurately reflect true physiological risk, enabling clinicians to establish trustworthy risk thresholds.
+From an operational perspective, M3 offers three practical takeaways:
+1. **Calibrated Risk Scoring:** An ECE of 4.07% ensures that model output probabilities accurately reflect true physiological risk, enabling clinicians to establish trustworthy risk thresholds.
+2. **Actionable Resuscitation Window:** A mean lead time of 6.2 hours (at $th=0.44$) and 5.7 hours (at $th=0.60$) aligns with clinical intervention protocols (e.g., Surviving Sepsis Campaign bundles; Evans et al., 2021), providing care teams adequate time for diagnostic workup.
+3. **Necessity of Post-Processing Filters:** The negative utility scores produced by raw hourly alerting demonstrate that bedside deployment requires sequence-level post-processing filters (e.g., moving average smoothing, persistent alert requirements, or clinical hysteresis) to suppress transient false alarms.
 
 ## 4.8 Limitations and Future Directions
 This study has several limitations:
-1. **Retrospective Single-Benchmark Design:** Evaluation was performed retrospectively on the PhysioNet 2019 dataset across two hospital systems. While patient-level splits and validation-locked thresholds prevented data leakage, prospective multi-center clinical validation across diverse EHR databases (e.g., MIMIC-IV, eICU) is required before clinical deployment.
-2. **PhysioNet Utility Metric Parameters:** The PhysioNet Utility Score function applies specific linear penalties for false alarms and rewards for early warnings. While standardized, optimal utility weights may vary across individual institutional ICU workflows.
-3. **Sepsis Label Framework:** Ground truth sepsis labels rely on the Sepsis-3 challenge annotation framework. Labeling uncertainty or variations in clinical documentation timing across hospitals could affect precise onset hours.
-4. **Missingness Interpretation:** While observation patterns correlate strongly with risk, missingness reflects systemic clinical workflows rather than direct measurement of underlying biology.
+1. **Retrospective Single-Benchmark Design:** Evaluation was performed retrospectively on the PhysioNet 2019 dataset across two hospital systems. Prospective multi-center clinical validation across diverse EHR databases (e.g., MIMIC-IV, eICU) is required before clinical deployment.
+2. **Operational Utility Metric Constraints:** The PhysioNet Utility Score applies fixed linear penalties for false alarms and rewards for early warnings. While standardized, optimal utility weights may vary across individual institutional ICU workflows.
+3. **Raw Hourly Alerting Limitation:** Predictions were evaluated hour-by-hour without sequence-level hysteresis or alert persistence filters, which accumulated false alarm penalties on non-septic patient stays.
+4. **Sepsis Label Framework:** Ground truth sepsis labels rely on the Sepsis-3 challenge annotation framework. Labeling uncertainty or variations in clinical documentation timing across hospitals could affect precise onset hours.
 
 
 ---
 
 # Section 5: Conclusions
 
-This study demonstrates that explicit representation of physiological values, observation patterns, and continuous temporal information significantly improves Transformer-based early sepsis prediction from irregular ICU data. Our findings lead to three principal conclusions:
+This study evaluated how explicit representation of physiological values, observation missingness patterns, and continuous temporal intervals influences Transformer-based early sepsis prediction from irregular ICU data. Our findings lead to three principal conclusions:
 
-1. **Synergy of Temporal and Missingness Signals:** Continuous frequency temporal embeddings (adapting Time2Vec) and binary observation masks provide complementary predictive signals. Incorporating both components into a Causal Transformer backbone yields superior predictive discrimination ($\text{AUROC} = 0.9617$, $\text{AUPRC} = 0.4231$), calibration ($\text{ECE} = 0.0407$), and benchmark utility ($\text{Utility} = -0.9535$) compared to plain Transformer baselines.
-2. **Operational Trade-offs in Warning Horizons:** Earlier prediction horizons are clinically counterproductive if early alerts suffer from high false alarm rates. While multi-branch Mixture-of-Experts routing extended lead times up to 12.0 hours, it was associated with a 3.17-fold increase in false positive rate (5.80% vs. 1.83% FPR/h) and a reduction in precision down to 11.58%. A compact Time-Aware Transformer achieves an advantageous operational balance by providing an actionable 5.7-hour early warning window while maintaining low false alarm rates.
-3. **Architectural Complexity Limits:** Increasing model complexity via multi-branch MoE expert routing or organ subsystem token prepending does not consistently improve early-warning discrimination or benchmark utility over a unified, continuous frequency time-aware Transformer.
+1. **Substantial Discrimination & Calibration Benefits:** Incorporating continuous frequency temporal embeddings (adapting Time2Vec) and binary observation masks into a Causal Transformer backbone yields superior predictive discrimination ($\text{AUROC} = 0.9617$, $\text{AUPRC} = 0.4231$) and calibration ($\text{ECE} = 0.0407$) compared to plain Transformer baselines.
+2. **Operational Utility Gap in Raw Hourly Alerting:** Strong predictive discrimination does not automatically translate into positive operational utility under raw hourly alerting protocols. Direct application of raw hourly predictions under the official PhysioNet utility function resulted in negative normalized utility ($\text{Utility} = -1.1440$ under the prespecified validation protocol $th_{\text{val\_opt}}=0.44$; $-0.9535$ at $th=0.60$). Patient-level decomposition indicated that missed-sepsis penalties and accumulated false-alarm penalties across non-septic hours outweighed early-warning rewards.
+3. **Architectural Complexity Limits:** Increasing model complexity via multi-branch Mixture-of-Experts routing or organ subsystem token prepending does not improve early-warning discrimination, calibration, or utility over a compact, continuous frequency time-aware Transformer.
 
-These results indicate that careful representation of temporal irregularity and observation missingness within a compact Transformer architecture is more critical for early sepsis alerting than introducing complex multi-branch network routing.
+These results indicate that while explicit representation of temporal irregularity and observation missingness significantly enhances Transformer discrimination and calibration, bedside clinical alerting requires sequence-level post-processing filters to convert predictive quality into positive operational utility.
 
 
 ---

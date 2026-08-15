@@ -3,40 +3,53 @@
         "model_name": "M3 (Time-Aware Transformer)",
         "checkpoint_path": "experiments/final_m3_frozen/best_m3_frozen.pt",
         "checkpoint_sha256": "5b22607444f4a242a52d0d9337e60c4c63044542dc6796a4a9de78c5ef38057c",
-        "operating_threshold": 0.60,
-        "metrics": {
+        "prediction_artifact": "results/m3_final_test_predictions.npz",
+        "prediction_sha256": "02fd6eb78682be8ca5743c4b3fddfcc7f57ed56f27f8496092108c30b2188a3d",
+        "primary_discrimination": {
             "auroc": 0.9617,
             "auroc_ci_95": [0.9495, 0.9727],
             "auprc": 0.4231,
             "auprc_ci_95": [0.3359, 0.5185],
-            "f1_score": 0.4110,
-            "precision": 0.3099,
-            "recall": 0.6103,
             "ece": 0.0407,
-            "mean_lead_time_hours": 5.7,
-            "lead_time_ci_95": [5.0, 6.5],
-            "pct_ge_6h_early": 37.6,
-            "pct_ge_1h_early": 56.5,
-            "fpr_per_hour": 0.0183,
-            "physionet_utility": -0.9535
+            "brier_score": 0.0213
+        },
+        "primary_prespecified_protocol": {
+            "validation_threshold": 0.44,
+            "validation_utility": -0.3060,
+            "test_utility": -1.1440,
+            "test_f1": 0.3652,
+            "test_precision": 0.2509,
+            "test_recall": 0.6708,
+            "mean_lead_time_hours": 6.2,
+            "pct_ge_6h_early": 41.2,
+            "fpr_per_non_septic_hour": 0.0356
+        },
+        "sensitivity_operating_points": {
+            "balanced_clinical_0_60": {
+                "threshold": 0.60,
+                "test_utility": -0.9535,
+                "test_f1": 0.4110,
+                "test_precision": 0.3099,
+                "test_recall": 0.6103,
+                "mean_lead_time_hours": 5.7,
+                "pct_ge_6h_early": 37.6,
+                "fpr_per_non_septic_hour": 0.0139,
+                "fpr_per_all_hours": 0.0262
+            },
+            "f1_optimal_0_78": {
+                "threshold": 0.78,
+                "test_utility": -0.8603,
+                "test_f1": 0.4622,
+                "test_precision": 0.4094,
+                "test_recall": 0.5307,
+                "mean_lead_time_hours": 4.8,
+                "fpr_per_non_septic_hour": 0.0077
+            }
         },
         "paired_bootstrap_differences": {
             "delta_auroc_m3_vs_m5": -0.0274,
             "delta_auroc_ci_95": [-0.0490, -0.0095],
-            "p_value": 0.004,
-            "delta_auprc_m3_vs_m5": -0.1480,
-            "delta_auprc_ci_95": [-0.1980, -0.0980]
-        },
-        "ablations": {
-            "M2_values_only": {"auroc": 0.9265, "auprc": 0.3540, "f1": 0.3420, "precision": 0.2250, "recall": 0.6150, "ece": 0.0520, "lead_h": 4.2, "pct_ge_6h": 29.8, "pct_ge_1h": 48.5, "fpr_h": 0.0310, "utility": -1.1510},
-            "M3_time_delta_only": {"auroc": 0.9480, "auprc": 0.3890, "f1": 0.3780, "precision": 0.2650, "recall": 0.6020, "ece": 0.0460, "lead_h": 5.2, "pct_ge_6h": 34.5, "pct_ge_1h": 52.0, "fpr_h": 0.0240, "utility": -1.0200},
-            "M3_time_mask_only": {"auroc": 0.9420, "auprc": 0.3720, "f1": 0.3610, "precision": 0.2480, "recall": 0.6150, "ece": 0.0490, "lead_h": 4.8, "pct_ge_6h": 31.2, "pct_ge_1h": 50.1, "fpr_h": 0.0280, "utility": -1.0800},
-            "M3_full": {"auroc": 0.9617, "auprc": 0.4231, "f1": 0.4110, "precision": 0.3099, "recall": 0.6103, "ece": 0.0407, "lead_h": 5.7, "pct_ge_6h": 37.6, "pct_ge_1h": 56.5, "fpr_h": 0.0183, "utility": -0.9535}
-        },
-        "architectural_explorations": {
-            "M1_xgboost": {"auroc": 0.8420, "auprc": 0.2650, "f1": 0.2810, "precision": 0.1840, "recall": 0.5820, "ece": 0.0850, "lead_h": 3.1, "pct_ge_6h": 22.4, "pct_ge_1h": 41.2, "fpr_h": 0.0480, "utility": -1.4200},
-            "M4_organ_moe": {"auroc": 0.9412, "auprc": 0.3180, "f1": 0.2640, "precision": 0.1620, "recall": 0.6940, "ece": 0.0780, "lead_h": 8.6, "pct_ge_6h": 34.2, "pct_ge_1h": 52.8, "fpr_h": 0.0340, "utility": -1.8420},
-            "M5_multi_hybrid": {"auroc": 0.9358, "auprc": 0.2751, "f1": 0.1997, "precision": 0.1158, "recall": 0.7251, "ece": 0.0959, "lead_h": 12.0, "pct_ge_6h": 39.3, "pct_ge_1h": 56.2, "fpr_h": 0.0580, "utility": -2.5556}
+            "p_value": 0.004
         }
     }
 }

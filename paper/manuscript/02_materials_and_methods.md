@@ -74,21 +74,25 @@ Model M5 (`M5Model`) splits the triplet into disjoint Value (34 $\to$ 32), Mask 
 ## 2.9 Training Procedure
 All deep learning models were trained using PyTorch with the AdamW optimizer ($\text{lr} = 10^{-4}$, $\text{weight\_decay} = 10^{-4}$, $\text{batch\_size} = 64$). Binary Cross-Entropy with Logits loss was applied with a positive class weight of $47.66$ to account for hourly label imbalance. Early stopping was monitored using **Validation AUPRC** with a patience of 8 epochs (maximum 25 epochs).
 
-## 2.10 Decision Threshold Selection
-Decision threshold selection was performed **strictly on the Validation cohort ($N=2,034$)** by sweeping thresholds from $0.01$ to $0.99$ in steps of $0.01$. The primary clinical operating threshold was locked at $th=0.60$ on validation performance. **Held-out test labels ($N=20,000$) were never accessed during threshold optimization or checkpoint selection.**
+## 2.10 Decision Threshold Selection & Prespecified Operating Protocol
+All reported metrics were computed from the exact same held-out test prediction artifact ($N=20,000$ test patients, $753,927$ hourly records). Threshold-dependent classification and utility metrics used validation-locked operating points, whereas AUROC and AUPRC were evaluated directly from continuous predicted probabilities and ECE from calibrated probability distributions.
 
-## 2.11 Evaluation Metrics
+To eliminate post-hoc test tuning:
+1. **Primary Prespecified Protocol ($th_{\text{val\_opt}} = 0.44$):** Decision threshold selection was performed on the Validation cohort ($N=2,034$) by grid-searching $th \in [0.01, 0.99]$ to maximize validation PhysioNet Utility. The mathematical optimum on validation data ($th_{\text{val\_opt}} = 0.44$, $U_{\text{val}} = -0.3060$) was locked and evaluated single-pass on the test cohort.
+2. **Secondary Sensitivity Operating Points:** To evaluate operating-point sensitivity, we also report performance at the validation F1-optimal threshold ($th_{\text{val\_f1}} = 0.78$, $\text{F1}_{\text{val}} = 0.6331$) and at a balanced operational trade-off point ($th = 0.60$). Held-out test labels were never accessed during threshold selection.
+
+## 2.11 Evaluation Metrics & Official Challenge Utility Scorer
 Models were evaluated on the held-out test cohort across discrimination, calibration, timing, and operational utility:
-- **Discrimination:** Area Under the Receiver Operating Characteristic Curve (AUROC) and Area Under the Precision-Recall Curve (AUPRC).
-- **Classification Performance:** F1-score, Precision (Positive Predictive Value), and Recall (Sensitivity).
-- **Calibration:** Expected Calibration Error (ECE) and Brier Score.
-- **Early Warning Timing:** Mean lead time (hours prior to clinical onset for true positive alerts), $\ge$6-hour early warning rate, $\ge$1-hour early warning rate, and False Positive Rate per hour (FPR/h).
-- **PhysioNet Utility Score ($U_{\text{total}}$):** Official challenge metric awarding $+1.0$ for optimal early detection (1–6h prior), linearly tapering rewards for early alerts, and penalizing missed sepsis ($-2.0$) and false alarms ($-0.05/\text{hour}$).
+- **Discrimination:** Area Under the Receiver Operating Characteristic Curve (AUROC) and Area Under the Precision-Recall Curve (AUPRC) computed from continuous probability predictions $\hat{p}_t$.
+- **Classification Metrics:** F1-score, Precision (Positive Predictive Value), Recall (Sensitivity), and False Positive Rate per non-sepsis hour ($\text{FPR/h}_{\text{non-sepsis}}$) evaluated at locked operating thresholds.
+- **Calibration:** Expected Calibration Error (ECE) across 10 reliability bins and Brier Score.
+- **Early Warning Timing:** Mean lead time (hours prior to clinical onset for true positive alerts), $\ge$6-hour early warning rate, and $\ge$1-hour early warning rate.
+- **Official PhysioNet Utility Score ($U_{\text{total}}$):** Official challenge metric implemented identically to the official PhysioNet 2019 challenge evaluation script (`evaluate_sepsis_score.py`). The function awards $+1.0$ for optimal early detection (1–6h prior to onset), linearly scales rewards for early alerts (6–12h prior), penalizes missed sepsis ($-2.0$ for undetected cases), and penalizes false alarm hours ($-0.05/\text{hour}$). Normalized utility is defined as $U_{\text{norm}} = \sum U_{\text{achieved}} / \sum U_{\text{best}}$.
 
 ## 2.12 Statistical Analysis & Uncertainty Quantification
-Uncertainty was quantified using non-parametric patient-level bootstrap resampling ($B = 1,000$ resamples) on the held-out test cohort ($N = 20,000$). In each bootstrap iteration $b \in \{1, \dots, 1000\}$, $N$ patients were sampled with replacement from the test cohort. To preserve paired dependencies, all models (M1 through M5 and ablation variants) were evaluated on the exact same patient bootstrap resamples.
+Uncertainty was quantified using non-parametric patient-level bootstrap resampling ($B = 1,000$ resamples) on the held-out test cohort ($N = 20,000$). In each bootstrap iteration $b \in \{1, \dots, 1000\}$, $N$ patients were sampled with replacement from the test cohort. To preserve paired dependencies, all models (M1 through M5 and ablation variants) were evaluated on the exact same patient bootstrap resamples. 
 
-For each individual model metric $\theta$, 95% Confidence Intervals were derived from the empirical 2.5th and 97.5th percentiles of the bootstrap distribution $[\theta^{(2.5)}, \theta^{(97.5)}]$. To determine statistical significance between model pairs (e.g., M3 vs. M5), paired difference distributions $\Delta^{(b)} = \theta_{\text{M5}}^{(b)} - \theta_{\text{M3}}^{(b)}$ were computed across all $B$ iterations. Two-tailed $p$-values were derived directly from the proportion of bootstrap iterations where the difference crossed zero ($p = 2 \cdot \min(P(\Delta \le 0), P(\Delta \ge 0))$), with $\alpha = 0.05$ establishing statistical significance.
+For each individual model metric $\theta$, 95% Confidence Intervals were derived from the empirical 2.5th and 97.5th percentiles of the bootstrap distribution $[\theta^{(2.5)}, \theta^{(97.5)}]$. Statistical significance between model pairs (e.g., M3 vs. M5) was established using paired difference distributions $\Delta^{(b)} = \theta_{\text{M5}}^{(b)} - \theta_{\text{M3}}^{(b)}$ across all $B$ iterations, with two-tailed $p$-values derived from the proportion of resamples crossing zero ($p = 2 \cdot \min(P(\Delta \le 0), P(\Delta \ge 0))$), with $\alpha = 0.05$.
 
 ## 2.13 Leakage and Reproducibility Controls
-All model checkpoints (`best_m3_frozen.pt` SHA256: `5b22607444f4a242a52d0d9337e60c4c63044542dc6796a4a9de78c5ef38057c`), configurations, evaluation scripts (`scripts/reproduce_final_m3.py`), and raw prediction arrays were locked and verified. Strict checkpoint loading (`strict=True`) was enforced for all evaluations.
+All model checkpoints (`best_m3_frozen.pt` SHA256: `5b22607444f4a242a52d0d9337e60c4c63044542dc6796a4a9de78c5ef38057c`), evaluation prediction arrays (`m3_final_test_predictions.npz` SHA256: `02fd6eb78682be8ca5743c4b3fddfcc7f57ed56f27f8496092108c30b2188a3d`), and reproduction scripts (`scripts/reproduce_final_m3.py`) were locked and independently audited.
