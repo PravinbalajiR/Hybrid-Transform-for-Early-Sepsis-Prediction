@@ -1,0 +1,5 @@
+Variant,Values,Mask,Time Delta,AUROC,AUPRC,F1,Precision,Recall,ECE,Mean Lead Time,>=6h,>=1h,FPR/h,Utility
+M2 / Values-Only,YES,NO,NO,0.9265,0.354,0.342,0.225,0.615,0.052,4.2 h,29.8%,48.5%,0.031,-1.151
+M3-Time+Delta,YES,NO,YES,0.948,0.389,0.378,0.265,0.602,0.046,5.2 h,34.5%,52.0%,0.024,-1.02
+M3-Time+Mask,YES,YES,NO,0.942,0.372,0.361,0.248,0.615,0.049,4.8 h,31.2%,50.1%,0.028,-1.08
+M3-Full (Primary),YES,YES,YES,0.9617,0.4231,0.411,0.3099,0.6103,0.0407,5.7 h,37.6%,56.5%,0.0183,-0.9535

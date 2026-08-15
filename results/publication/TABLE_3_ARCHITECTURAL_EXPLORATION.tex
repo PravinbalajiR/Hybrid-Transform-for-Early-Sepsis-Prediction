@@ -1,0 +1,14 @@
+\begin{table}[htbp]
+\centering
+\caption{Architectural Exploration Comparison (M3 vs M4 vs M5)}
+\label{tab:arch_exploration}
+\begin{tabular}{lllllllllllll}
+\hline
+\textbf{Model} & \textbf{Architecture} & \textbf{Parameters} & \textbf{AUROC} & \textbf{AUPRC} & \textbf{F1} & \textbf{Recall} & \textbf{ECE} & \textbf{Lead Time} & \textbf{>=6h} & \textbf{FPR/h} & \textbf{Utility} & \textbf{Interpretation} \\
+\hline
+M3 (Primary) & Time-Aware Transformer & 163,841 & 0.9617 & 0.4231 & 0.411 & 0.6103 & 0.0407 & 5.7 h & 37.6\% & 0.0183 & -0.9535 & Best overall discrimination, calibration, and utility trade-off. \\
+M4 (Ablation) & Organ Hybrid / MoE & 198,433 & 0.9412 & 0.318 & 0.264 & 0.694 & 0.078 & 8.6 h & 34.2\% & 0.034 & -1.842 & Earlier warning and higher recall, but reduced discrimination and precision. \\
+M5 (Ablation) & Multi-Hybrid Network & 224,713 & 0.9358 & 0.2751 & 0.1997 & 0.7251 & 0.0959 & 12.0 h & 39.3\% & 0.058 & -2.5556 & Very early/high-recall behavior, but substantially poorer discrimination and utility. \\
+\hline
+\end{tabular}
+\end{table}
