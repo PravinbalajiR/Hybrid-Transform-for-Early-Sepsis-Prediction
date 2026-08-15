@@ -3,7 +3,7 @@
 ## 4.1 Summary of Main Findings
 This study investigated whether explicitly representing physiological values, observation missingness patterns, and continuous temporal intervals within a Transformer architecture improves early sepsis prediction from irregular ICU data. Our findings indicate that a compact Time-Aware Transformer (M3) incorporating continuous frequency time-delta embeddings (adapting Time2Vec; Kazemi et al., 2019) and missingness masks achieves higher predictive discrimination ($\text{AUROC} = 0.9617$, $\text{AUPRC} = 0.4231$) and calibration ($\text{ECE} = 0.0407$) compared to standard tree ensembles (M1), plain Transformer baselines (M2), and multi-branch hybrid architectures (M4 and M5).
 
-However, our controlled component ablations and operational audits demonstrate a fundamental clinical insight: **strong predictive discrimination does not automatically translate into positive operational utility under raw hourly alerting protocols**. Although the proposed representation achieved strong discrimination on the held-out cohort, direct application of the raw hourly predictions under the evaluated PhysioNet utility formulation resulted in negative normalized utility ($\text{Utility} = -1.1440$ under the prespecified validation protocol $th_{\text{val\_opt}}=0.44$; $-0.9535$ at $th=0.60$). Patient-level decomposition indicated that missed-sepsis penalties and accumulated false-alarm penalties outweighed early-warning rewards. Thus, discrimination performance did not translate directly into positive benchmark utility under the evaluated operating protocol.
+However, our controlled component ablations and operational audits demonstrate a fundamental clinical insight: **strong predictive discrimination does not automatically translate into positive operational utility under raw hourly alerting protocols**. Although the proposed representation achieved strong discrimination on the held-out cohort, direct application of the raw hourly predictions under the evaluated PhysioNet utility formulation resulted in negative normalized utility ($\text{Utility} = -1.1440$ under the prespecified validation protocol $th_{\text{val\_opt}}=0.44$; $-0.9535$ at $th=0.60$; $-0.8696$ at $th=0.78$). Patient-level decomposition indicated that missed-sepsis penalties and accumulated false-alarm penalties outweighed early-warning rewards. Thus, discrimination performance did not translate directly into positive benchmark utility under the evaluated operating protocol.
 
 ## 4.2 Why Continuous Temporal Representation Matters
 In intensive care units, physiological measurements are sampled at non-uniform intervals ranging from frequent vital sign telemetry to sporadic laboratory draws. Standard sequence models often process data by assuming uniform step intervals or applying Last Observation Carried Forward (LOCF) imputation, which obscures the continuous nature of time.
@@ -15,18 +15,32 @@ A key characteristic of electronic health record data is that missingness is not
 
 Our component ablation confirms that explicitly concatenating binary observation masks ($\mathbf{m}$) provides independent diagnostic value. Adding masks to the values-only baseline (M2 $\to$ M3-Time+Mask) improved AUROC by **+0.0155** (0.9265 $\to$ 0.9420) and increased precision by **+0.0230** (0.2250 $\to$ 0.2480). When added to the Time+Delta model (M3-Time+Delta $\to$ M3-Full), missingness masks yielded an incremental **+0.0449 PPV increase** in precision (0.2650 $\to$ 0.3099) while lowering non-sepsis false alarm rates down to **0.0139 FPR/hour** (1.39% per hour at $th=0.60$). This indicates that observation patterns act as an effective precision regularizer in clinical self-attention models.
 
-## 4.4 Operational Utility & Exact Patient-Level Decomposition Analysis
-To understand why predictive discrimination ($\text{AUROC}=0.9617$) did not yield positive challenge utility, we performed an exact patient-level forensic decomposition of the PhysioNet Utility Score across $20,000$ test patient sequences ($1,066$ septic patients, $18,934$ non-septic patients). Table 4 details the exact arithmetic decomposition across the three evaluated operating points.
+## 4.4 Operational Utility & Master Metric Reconciliation Matrix
+To understand why predictive discrimination ($\text{AUROC}=0.9617$) did not yield positive challenge utility, we performed an exact patient-level forensic decomposition of the PhysioNet Utility Score across $20,000$ test patient sequences ($1,066$ septic patients, $18,934$ non-septic patients). Table 4 details the exact arithmetic decomposition across the three evaluated operating points alongside explicit distinctions between hourly recall, patient detection rate, non-sepsis FPR/h, and all-hours alarm rates.
 
-### Table 4: Exact Patient-Level Utility Decomposition (Held-Out Test Cohort, N=20,000 Patients)
-| Operating Point | Threshold ($th$) | Septic Detected (TP) | Septic Missed (FN) | Early Warning TP Reward | Missed-Sepsis FN Penalty | Non-Sepsis FP Hours | Total FP Penalty | Total Achieved Utility | Total Best Utility | Normalized Utility |
-|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| **Primary Protocol** | **0.44** | 750 (70.4%) | 316 (29.6%) | +233.56 pts | -632.00 pts | 14,771 hrs | -821.10 pts | -1,219.54 pts | +1,066.00 pts | **-1.1440** |
-| **Balanced Fallback** | **0.60** | 704 (66.0%) | 362 (34.0%) | +242.89 pts | -724.00 pts | 9,816 hrs | -535.35 pts | -1,016.46 pts | +1,066.00 pts | **-0.9535** |
-| **Validation F1-Opt** | **0.78** | 613 (57.5%) | 453 (42.5%) | +222.00 pts | -906.00 pts | 4,605 hrs | -243.00 pts | -927.00 pts | +1,066.00 pts | **-0.8696** |
+### Table 4: Master Patient-Level Utility & Metric Reconciliation Matrix (Held-Out Test Cohort, N=20,000)
+| Metric Dimension | Primary Protocol ($th=0.44$, Val Utility Opt) | Sensitivity ($th=0.60$, Balanced Fallback) | Sensitivity ($th=0.78$, Val F1 Opt) |
+|---|:---:|:---:|:---:|
+| **Normalized PhysioNet Utility ($U_{\text{norm}}$)** | **-1.1440** | **-0.9535** | **-0.8696** |
+| **Hourly Recall (Sensitivity)** | **67.08%** | **61.03%** | **50.79%** |
+| **Patient Detection Rate (Septic TPs)** | **70.4% (750 / 1,066)** | **66.0% (704 / 1,066)** | **57.5% (613 / 1,066)** |
+| **Patient Missed Rate (Septic FNs)** | **29.6% (316 / 1,066)** | **34.0% (362 / 1,066)** | **42.5% (453 / 1,066)** |
+| **Early Warning TP Reward** | **+233.56 pts** | **+242.89 pts** | **+222.00 pts** |
+| **Missed-Sepsis FN Penalty** | **-632.00 pts (316 × -2.0)** | **-724.00 pts (362 × -2.0)** | **-906.00 pts (453 × -2.0)** |
+| **Non-Sepsis FP Alarm Hours** | **14,771 hrs** | **9,816 hrs** | **4,605 hrs** |
+| **Non-Sepsis FP Penalty** | **-738.55 pts** | **-490.80 pts** | **-230.25 pts** |
+| **Sepsis Early FP Alarm Hours** | **1,651 hrs** | **891 hrs** | **255 hrs** |
+| **Total False Alarm Penalty** | **-821.10 pts** | **-535.35 pts** | **-243.00 pts** |
+| **Total Achieved Utility (Raw)** | **-1,219.54 pts** | **-1,016.46 pts** | **-927.00 pts** |
+| **Total Best Possible Utility** | **+1,066.00 pts** | **+1,066.00 pts** | **+1,066.00 pts** |
+| **Non-Sepsis Hourly FPR ($\text{FPR/h}_{\text{non-sepsis}}$)** | **2.10% per hour** | **1.39% per hour** | **0.65% per hour** |
+| **All-Hours Hourly Alarm Rate** | **3.56% per hour** | **2.62% per hour** | **1.54% per hour** |
+| **Hourly Precision (PPV)** | **25.09%** | **30.99%** | **43.90%** |
+| **Hourly F1-Score** | **0.3652** | **0.4110** | **0.4710** |
+| **Mean Lead Time (Hours)** | **7.7 h** | **5.7 h** | **2.9 h** |
 
 As shown in Table 4, the exact arithmetic identity holds to numerical precision ($\text{Achieved Utility} = \text{TP Reward} + \text{FN Penalty} + \text{FP Penalty}$):
-1. **Primary Protocol ($th=0.44$):** M3 detected 750 of 1,066 septic cases (70.4% detection rate), earning $+233.56$ points in early warning rewards. However, 316 missed cases incurred $316 \times (-2.00) = \mathbf{-632.00}$ penalty points, while $14,771$ false-alarm hours on non-septic patients plus $1,651$ early false-alarm hours incurred $\mathbf{-821.10}$ penalty points. Net achieved utility: $+233.56 - 632.00 - 821.10 = \mathbf{-1,219.54}$ points ($U_{\text{norm}} = \mathbf{-1.1440}$).
+1. **Primary Protocol ($th=0.44$):** M3 detected 750 of 1,066 septic cases (70.4% patient detection rate), earning $+233.56$ points in early warning rewards. However, 316 missed cases incurred $316 \times (-2.00) = \mathbf{-632.00}$ penalty points, while $14,771$ false-alarm hours on non-septic patients plus $1,651$ early false-alarm hours incurred $\mathbf{-821.10}$ penalty points. Net achieved utility: $+233.56 - 632.00 - 821.10 = \mathbf{-1,219.54}$ points ($U_{\text{norm}} = \mathbf{-1.1440}$).
 2. **Balanced Fallback ($th=0.60$):** Detecting 704 cases (66.0%) earned $+242.89$ points, but 362 missed cases ($-724.00$ points) and $9,816$ non-sepsis FP hours ($-490.80$ points) yielded $-1,016.46$ net points ($U_{\text{norm}} = \mathbf{-0.9535}$).
 3. **Validation F1-Opt ($th=0.78$):** Detecting 613 cases (57.5%) earned $+222.00$ points, with false alarm hours dropping to $4,605$ hours ($-230.25$ points), but 453 missed cases ($-906.00$ points) yielded $-927.00$ net points ($U_{\text{norm}} = \mathbf{-0.8696}$).
 
@@ -45,7 +59,7 @@ M3 extends this literature by demonstrating that incorporating continuous Time2V
 ## 4.7 Practical Clinical Implications
 From an operational perspective, M3 offers three practical takeaways:
 1. **Calibrated Risk Scoring:** An ECE of 4.07% ensures that model output probabilities accurately reflect true physiological risk, enabling clinicians to establish trustworthy risk thresholds.
-2. **Actionable Resuscitation Window:** A mean lead time of 6.2 hours (at $th=0.44$) and 5.7 hours (at $th=0.60$) aligns with clinical intervention protocols (e.g., Surviving Sepsis Campaign bundles; Evans et al., 2021), providing care teams adequate time for diagnostic workup.
+2. **Actionable Resuscitation Window:** A mean lead time of 7.7 hours (at $th=0.44$) and 5.7 hours (at $th=0.60$) aligns with clinical intervention protocols (e.g., Surviving Sepsis Campaign bundles; Evans et al., 2021), providing care teams adequate time for diagnostic workup.
 3. **Necessity of Post-Processing Filters:** The negative utility scores produced by raw hourly alerting demonstrate that bedside deployment requires sequence-level post-processing filters (e.g., moving average smoothing, persistent alert requirements, or clinical hysteresis) to suppress transient false alarms.
 
 ## 4.8 Limitations and Future Directions
