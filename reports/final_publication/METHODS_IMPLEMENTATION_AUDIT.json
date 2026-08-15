@@ -1,0 +1,89 @@
+{
+    "methods_implementation_audit": {
+        "dataset": {
+            "name": "PhysioNet / Computing in Cardiology Challenge 2019",
+            "total_patients": 40336,
+            "train_patients": 18302,
+            "val_patients": 2034,
+            "test_patients": 20000,
+            "patient_overlap": 0,
+            "hourly_observations": 1552210,
+            "sepsis_onset_rate": 0.0738
+        },
+        "preprocessing": {
+            "vital_lab_features": 34,
+            "imputation_policy": "Z-score normalization fit on Train split strictly; zero-fill for initial missing values",
+            "missingness_mask": "Binary indicator (1 observed, 0 missing)",
+            "time_delta": "Elapsed hours since last observation, clipped at 168.0h",
+            "triplet_vector": "102 features [34 values, 34 masks, 34 deltas]"
+        },
+        "architectures": {
+            "M1_XGBoost": {
+                "class": "xgboost.XGBClassifier",
+                "max_depth": 6,
+                "n_estimators": 100,
+                "learning_rate": 0.1,
+                "subsample": 0.8,
+                "scale_pos_weight": 47.66
+            },
+            "M2_Plain_Transformer": {
+                "class": "TACTModel (input_dim=34)",
+                "d_model": 64,
+                "nhead": 4,
+                "num_layers": 3,
+                "dim_feedforward": 128,
+                "dropout": 0.1,
+                "parameters": 161793
+            },
+            "M3_Time_Aware_Transformer": {
+                "class": "TACTModel (input_dim=102)",
+                "embedding": "TimeAwareEmbedding + Time2Vec (k=4 frequency channels)",
+                "d_model": 64,
+                "nhead": 4,
+                "num_layers": 3,
+                "dim_feedforward": 128,
+                "dropout": 0.1,
+                "parameters": 163841,
+                "checkpoint": "experiments/final_m3_frozen/best_m3_frozen.pt",
+                "sha256": "5b22607444f4a242a52d0d9337e60c4c63044542dc6796a4a9de78c5ef38057c"
+            },
+            "M4_Organ_Hybrid": {
+                "class": "SepsisHybridModel",
+                "source": "models/hybrid/hybrid_model.py",
+                "organ_branch": "PhysiologyAwareTemporalEncoders (6 Organ Tokens: Cardio, Pulm, Renal, Hepatic, Heme, Neuro)",
+                "temporal_branch": "TACTModel + 6 Organ Prefix Tokens (sequence length max_len + 6)",
+                "multi_task": "Primary Sepsis Head + 5-Variable Forecasting Head (MAP, Cr, Lactate, O2Sat, RespRate)",
+                "parameters": 198433
+            },
+            "M5_Multi_Hybrid": {
+                "class": "M5Model",
+                "source": "models/m5/m5_model.py",
+                "branch_encoders": "Disjoint ValueEncoder(34->32), MaskEncoder(34->32), TimeEncoder(log1p, 34->32)",
+                "temporal_experts": "Local TCN (Conv1D k=3), Global Transformer (3 layers, 4 heads), Time-Aware MLP",
+                "moe_router": "Softmax Adaptive Gating Router w = Softmax(G(h_shared))",
+                "fusion": "Softmax Adaptive Representation Fusion + Causal Temporal Attention Pooling",
+                "parameters": 224713,
+                "checkpoint": "experiments/m5_checkpoints/best_m5_proper_frozen.pt"
+            }
+        },
+        "training_protocol": {
+            "optimizer": "AdamW",
+            "learning_rate": 0.0001,
+            "weight_decay": 0.0001,
+            "batch_size": 64,
+            "max_epochs": 25,
+            "loss_function": "BCEWithLogitsLoss (pos_weight=47.66)",
+            "early_stopping": "Validation AUPRC strictly (Patience = 8 epochs)"
+        },
+        "threshold_policy": {
+            "search_grid": "0.01 to 0.99 in steps of 0.01 on Validation split ONLY",
+            "primary_locked_threshold": 0.60,
+            "test_evaluation": "Single pass on Test split (N=20,000) at locked threshold"
+        },
+        "statistical_testing": {
+            "bootstrap_samples": 1000,
+            "resampling_unit": "Patient-level bootstrap",
+            "confidence_intervals": "95% Percentile Bootstrap [2.5%, 97.5%]"
+        }
+    }
+}
