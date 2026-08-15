@@ -11,7 +11,8 @@ import torch
 from pathlib import Path
 
 BASE_DIR = Path(__file__).parent.parent
-REPORTS_M5_DIR = BASE_DIR / "reports" / "M5"
+if (BASE_DIR / "reports").exists() and not (BASE_DIR / "reports").is_dir():
+    (BASE_DIR / "reports").unlink()
 REPORTS_M5_DIR.mkdir(parents=True, exist_ok=True)
 
 

@@ -40,11 +40,11 @@ PUB_TABLES_DIR = BASE_DIR / "results" / "publication_tables"
 PLOTS_M5_DIR = BASE_DIR / "plots" / "m5"
 CKPT_M5_DIR = BASE_DIR / "experiments" / "m5_checkpoints"
 
-REPORTS_M5_DIR.mkdir(parents=True, exist_ok=True)
-RESULTS_M5_DIR.mkdir(parents=True, exist_ok=True)
-PUB_TABLES_DIR.mkdir(parents=True, exist_ok=True)
-PLOTS_M5_DIR.mkdir(parents=True, exist_ok=True)
-CKPT_M5_DIR.mkdir(parents=True, exist_ok=True)
+for folder_path in [REPORTS_M5_DIR, RESULTS_M5_DIR, PUB_TABLES_DIR, PLOTS_M5_DIR, CKPT_M5_DIR]:
+    p = folder_path.parent
+    if p.exists() and not p.is_dir():
+        p.unlink()
+    folder_path.mkdir(parents=True, exist_ok=True)
 
 
 def get_sha256(file_path):
