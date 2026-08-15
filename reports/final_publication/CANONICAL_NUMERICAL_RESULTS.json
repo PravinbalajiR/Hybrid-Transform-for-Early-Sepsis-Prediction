@@ -22,7 +22,20 @@
             "test_recall": 0.6708,
             "mean_lead_time_hours": 6.2,
             "pct_ge_6h_early": 41.2,
-            "fpr_per_non_septic_hour": 0.0356
+            "fpr_per_non_septic_hour": 0.0356,
+            "decomposition": {
+                "n_tp_patients": 750,
+                "n_fn_patients": 316,
+                "tp_reward": 233.56,
+                "fn_penalty": -632.00,
+                "fp_hours_non_sepsis": 14771,
+                "fp_penalty_non_sepsis": -738.55,
+                "fp_hours_sepsis_early": 1651,
+                "fp_penalty_sepsis_early": -82.55,
+                "total_fp_penalty": -821.10,
+                "total_achieved_utility": -1219.54,
+                "total_best_utility": 1066.00
+            }
         },
         "sensitivity_operating_points": {
             "balanced_clinical_0_60": {
@@ -34,16 +47,41 @@
                 "mean_lead_time_hours": 5.7,
                 "pct_ge_6h_early": 37.6,
                 "fpr_per_non_septic_hour": 0.0139,
-                "fpr_per_all_hours": 0.0262
+                "decomposition": {
+                    "n_tp_patients": 704,
+                    "n_fn_patients": 362,
+                    "tp_reward": 242.89,
+                    "fn_penalty": -724.00,
+                    "fp_hours_non_sepsis": 9816,
+                    "fp_penalty_non_sepsis": -490.80,
+                    "fp_hours_sepsis_early": 891,
+                    "fp_penalty_sepsis_early": -44.55,
+                    "total_fp_penalty": -535.35,
+                    "total_achieved_utility": -1016.46,
+                    "total_best_utility": 1066.00
+                }
             },
-            "f1_optimal_0_78": {
+            "validation_f1_optimal_0_78": {
                 "threshold": 0.78,
-                "test_utility": -0.8603,
+                "test_utility": -0.8696,
                 "test_f1": 0.4622,
                 "test_precision": 0.4094,
                 "test_recall": 0.5307,
                 "mean_lead_time_hours": 4.8,
-                "fpr_per_non_septic_hour": 0.0077
+                "fpr_per_non_septic_hour": 0.0077,
+                "decomposition": {
+                    "n_tp_patients": 613,
+                    "n_fn_patients": 453,
+                    "tp_reward": 222.00,
+                    "fn_penalty": -906.00,
+                    "fp_hours_non_sepsis": 4605,
+                    "fp_penalty_non_sepsis": -230.25,
+                    "fp_hours_sepsis_early": 255,
+                    "fp_penalty_sepsis_early": -12.75,
+                    "total_fp_penalty": -243.00,
+                    "total_achieved_utility": -927.00,
+                    "total_best_utility": 1066.00
+                }
             }
         },
         "paired_bootstrap_differences": {
