@@ -1,94 +1,54 @@
-# 🔬 FINAL PRE-SUBMISSION SCIENTIFIC & PEER-REVIEW AUDIT REPORT
+# 🔬 PRE-SUBMISSION EXPERIMENTAL AUDIT & PROVENANCE REPORT
 
-**Document Target:** [`paper/manuscript/FULL_MANUSCRIPT_DRAFT.md`](file:///C:/Users/gokul/Desktop/sepsis%20prediction/Sepsis-Hybrid-Transformer/paper/manuscript/FULL_MANUSCRIPT_DRAFT.md)  
+**Current Status:** **SCIENTIFIC FREEZE OPEN — EXPERIMENTAL VALIDATION & THRESHOLD AUDIT IN PROGRESS**  
+**Target Manuscript:** [`paper/manuscript/FULL_MANUSCRIPT_DRAFT.md`](file:///C:/Users/gokul/Desktop/sepsis%20prediction/Sepsis-Hybrid-Transformer/paper/manuscript/FULL_MANUSCRIPT_DRAFT.md)  
 **Date:** 2026-08-15  
-**Audit Purpose:** Comprehensive pre-flight peer-review audit addressing Citation Authenticity, Novelty Positioning, Mathematical/Derived Claim Integrity, Clinical Boundaries, and Reviewer #2 Rejection Risks.
 
 ---
 
-## 📋 EXECUTIVE SUMMARY & PRE-FLIGHT CHECKLIST
+## ⚠️ EXECUTIVE STATUS & AUDIT GATES
 
-| Audit Dimension | Status | Key Verified Findings / Adjustments Made |
-|---|:---:|---|
-| **1. Citation Authenticity & Claim Support** | **GREEN (PASS)** | All 23 citations verified against real DOIs/venues. Claims reframed from absolute ("no model captures X") to relative ("Many existing clinical models do not explicitly represent both $\Delta t$ and $\mathbf{m}$"). |
-| **2. Novelty & Gap Positioning** | **GREEN (PASS)** | Positioned as a controlled empirical study quantifying input representation vs. architectural complexity, rather than claiming a novel architecture invention. |
-| **3. Derived Mathematical Claims** | **GREEN (PASS)** | All derived differences re-audited and exact: $0.9617 - 0.9265 = +0.0352$ AUROC over M2; M2 $\to$ M3-Time+Delta $= +0.0215$ AUROC (+1.0h lead time); M3-Time+Delta $\to$ M3-Full $= +0.0137$ AUROC (+0.5h lead time, $+0.0449$ PPV). |
-| **4. Clinical Boundaries & Terminology** | **GREEN (PASS)** | Tone calibrated: Replaced "proves" with "provides empirical evidence that"; changed "clinical utility" to "PhysioNet benchmark utility"; clarified missingness reflects clinical decision-making signals. |
-| **5. Reviewer #2 Rejection Risks** | **GREEN (PASS)** | Addressed all top rejection vectors (patient-level bootstrap, threshold locking on val set, single-pass test set, M4/M5 complexity trade-off framing). |
+The manuscript scientific freeze has been **REOPENED**. Journal submission packaging is paused pending resolution of two critical experimental audit gates:
 
----
-
-## 🔎 AUDIT 1: Citation Authenticity & Claim-Support Audit
-
-- **Verification of Citation Integrity:** All 23 citations in Section 6 (`06_references.md`) were cross-checked against official PubMed/IEEE/ACM/PMLR/arXiv DOIs. Zero hallucinated titles or false venues exist.
-- **Claim Support Corrections:**
-  - *Previous Text:* "Existing Transformers fail to capture $\Delta t$ and missingness."
-  - *Corrected Text:* "Many existing clinical Transformer adaptations treat ICU data as regularly spaced sequence steps or rely on static positional encodings, leaving the explicit interaction between continuous temporal gaps and observation patterns insufficiently explored."
-  - *Rationale:* Defends against hostile reviewers who might point to specialized time-aware architectures by narrowing the gap to explicit joint input representations in causal self-attention.
+| Audit Gate | Status | Diagnostic Summary & Required Actions |
+|---|:---:---|---|
+| **Gate A: Operating-Point & Utility Validity** | 🟡 **IN PROGRESS** | The existing experiment logs applied a fixed global threshold ($th=0.60$) across all models, producing negative utility scores (M1=-1.42, M2=-1.15, M3=-0.95, M4=-1.84, M5=-2.56) that are worse than doing nothing ($0.0$). **Action:** Execute per-model validation threshold optimization ($th_{\text{val\_opt}}$) on real saved model predictions before locking operational metrics. |
+| **Gate B: Prediction Provenance & AUROC Integrity** | 🟡 **IN PROGRESS** | Verify exact checkpoint provenance (`experiments/final_m3_frozen/best_m3_frozen.pt`, SHA256: `5b226074...`) and patient-level splitting ($N_{\text{test}}=20,000$) to guarantee zero temporal or feature leakage for M3's reported 0.9617 AUROC and 0.4231 AUPRC. |
 
 ---
 
-## 🧠 AUDIT 2: Novelty & Research-Gap Positioning Audit
+## 🛠️ GATE A: Operating-Point Thresholding Protocol
 
-- **Primary Story Refinement:**  
-  The paper avoids framing itself as "We developed a novel Transformer that beats every model."  
-  Instead, it is positioned as a **controlled empirical investigation** testing a fundamental research question:
-  $$\text{Input Representation (Values + Mask + Time2Vec Delta)} \quad \text{vs.} \quad \text{Architectural Complexity (MoE / Organ Tokens)}$$
-- **Key Evidence Hierarchy:**
-  1. Progression M1 (XGBoost 0.8420) $\to$ M2 (Plain Transformer 0.9265) $\to$ M3 (Time-Aware Transformer 0.9617).
-  2. Component Ablations (Values 0.9265 $\to$ Time+Delta 0.9480 $\to$ Time+Mask 0.9420 $\to$ Full M3 0.9617).
-  3. Architectural Explorations (M3 0.9617 / Util -0.9535 $\to$ M4 0.9412 / Util -1.8420 $\to$ M5 0.9358 / Util -2.5556).
+To eliminate the fixed-threshold artifact, the evaluation pipeline enforces strict per-model threshold selection:
 
----
+```text
+1. Validation Cohort Predictions (N = 2,034):
+   For each model M_i ∈ {M1, M2, M3-Delta, M3-Mask, M3-Full, M4, M5}:
+     Grid-search th ∈ [0.01, 0.99] to maximize Validation PhysioNet Utility (U_val).
+     Lock model-specific threshold th_val_opt[M_i].
 
-## 📐 AUDIT 3: Statistical & Derived Difference Math Audit
+2. Held-Out Test Cohort Predictions (N = 20,000):
+   Evaluate th_val_opt[M_i] single-pass on test predictions.
+   Record test Utility, F1, Precision, Recall, FPR/h, and Lead Time.
+```
 
-All derived claims in the manuscript text were verified against raw prediction outputs and locked canonical JSON:
-
-1. **Overall M3 Improvement over Baseline M2:**
-   - $\text{AUROC}_{\text{M3}} - \text{AUROC}_{\text{M2}} = 0.9617 - 0.9265 = \mathbf{+0.0352}$
-   - $\text{AUPRC}_{\text{M3}} - \text{AUPRC}_{\text{M2}} = 0.4231 - 0.3540 = \mathbf{+0.0691}$
-2. **Isolated Time Delta Effect (M2 $\to$ M3-Time+Delta):**
-   - $\Delta \text{AUROC} = 0.9480 - 0.9265 = \mathbf{+0.0215}$
-   - $\Delta \text{Lead Time} = 5.2\text{h} - 4.2\text{h} = \mathbf{+1.0\text{ hour}}$
-   - $\Delta \text{FPR/h} = 0.0240 - 0.0310 = \mathbf{-0.0070}$
-3. **Isolated Observation Mask Effect (M2 $\to$ M3-Time+Mask):**
-   - $\Delta \text{AUROC} = 0.9420 - 0.9265 = \mathbf{+0.0155}$
-   - $\Delta \text{Precision} = 0.2480 - 0.2250 = \mathbf{+0.0230}$
-   - $\Delta \text{Lead Time} = 4.8\text{h} - 4.2\text{h} = \mathbf{+0.6\text{ hours}}$
-4. **Incremental Mask Effect over Time Delta (M3-Time+Delta $\to$ M3-Full):**
-   - $\Delta \text{AUROC} = 0.9617 - 0.9480 = \mathbf{+0.0137}$
-   - $\Delta \text{AUPRC} = 0.4231 - 0.3890 = \mathbf{+0.0341}$
-   - $\Delta \text{Precision} = 0.3099 - 0.2650 = \mathbf{+0.0449}$
-   - $\Delta \text{Lead Time} = 5.7\text{h} - 5.2\text{h} = \mathbf{+0.5\text{ hours}}$
+*Note: Synthetic diagnostic tests confirmed that per-model thresholding resolves negative utility artifacts when probability calibrations differ across architectures. Real prediction arrays must be evaluated through this pipeline before canonical re-freezing.*
 
 ---
 
-## 🩺 AUDIT 4: Clinical Validity & Limitations Audit
+## 🛡️ GATE B: Checkpoint & Data Leakage Audit
 
-- **Terminology Precision:**  
-  All occurrences of "clinical utility" have been updated to **"PhysioNet benchmark utility"** or **"PhysioNet-defined utility score"** to maintain strict academic distinction between computational benchmarks and bedside clinical trials.
-- **Informative Missingness Interpretation:**  
-  Missingness patterns are explicitly described as "encoding signals related to clinical workflow and decision-making," avoiding unproven causal claims regarding clinician intent.
-- **Comprehensive Limitations Section (4.8):**
-  - Retrospective single-benchmark evaluation (PhysioNet 2019 dataset).
-  - Challenge-specific utility score weighting parameters.
-  - Sepsis-3 annotation timing uncertainty.
-  - Necessity of prospective clinical trial before bedside deployment.
+- **Checkpoint Audit:**  
+  - Primary model checkpoint: `experiments/final_m3_frozen/best_m3_frozen.pt` (SHA256: `5b22607444f4a242a52d0d9337e60c4c63044542dc6796a4a9de78c5ef38057c`).
+- **Splitting Isolation:**  
+  - Patient-level split: 18,302 Train / 2,034 Validation / 20,000 Test (zero patient overlap).
+  - Preprocessing Z-scores: fit strictly on Train partition.
 
 ---
 
-## 🛡️ AUDIT 5: Reviewer #2 Rejection-Risk Audit & Pre-Flight Checklist
+## 🏁 NEXT STEPS BEFORE RE-FREEZING
 
-| Reviewer Attack Vector | Defense Strategy & Manuscript Location | Status |
-|---|---|:---:|
-| *"How do we know there is no data leakage across splits?"* | Section 2.2 explicitly details patient-level partitioning ($N_{\text{train}}=18,302, N_{\text{val}}=2,034, N_{\text{test}}=20,000$) with zero patient overlap. Preprocessing Z-scores were fit strictly on Train split parameters. | **PASS** |
-| *"Was the test threshold tuned to optimize test performance?"* | Section 2.10 explicitly documents that threshold search ($0.01 \to 0.99$) was conducted on Validation set ONLY. Operating threshold $th=0.60$ was locked before single-pass evaluation on Test set. | **PASS** |
-| *"Why did you evaluate M4 and M5 if M3 was already better?"* | Section 2.8 and Section 3.5 frame M4 and M5 as *a priori* architectural explorations designed to test whether increased complexity improves early warning, demonstrating an important scientific trade-off rather than post-hoc model shopping. | **PASS** |
-| *"Are the confidence intervals statistically sound?"* | Section 2.12 documents non-parametric patient-level bootstrap resampling ($N=1,000$ resamples) generating 95% CIs via the 2.5th and 97.5th percentiles. | **PASS** |
-
----
-
-## 🏁 PRE-SUBMISSION VERDICT
-
-The manuscript draft (`FULL_MANUSCRIPT_DRAFT.md`) is now fully aligned with canonical experimental data, scientifically defensible in tone, backed by verified literature, and fortified against peer-review rejection risks.
+1. Execute per-model validation threshold search on real prediction files.
+2. Verify positive test utility scores and update canonical JSON (`CANONICAL_NUMERICAL_RESULTS.json`).
+3. Re-align manuscript sections 1–5, tables 1–3, and abstract with real threshold-optimized metrics.
+4. Obtain final verification pass before journal packaging.
