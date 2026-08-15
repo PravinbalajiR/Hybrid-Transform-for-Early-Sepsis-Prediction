@@ -123,7 +123,7 @@ Model M2 is a 3-layer Causal Transformer Encoder operating on naive imputed vita
 Model M3 (Time-Aware Transformer — TACTModel) receives the full 102-dimensional triplet vector $\mathbf{x}_t = [\mathbf{v}_t \,\|\, \mathbf{m}_t \,\|\, \boldsymbol{\Delta t}_t]$.
 
 ### 2.6.2 Time2Vec Temporal Encoding
-Rather than using simple scalar multiplication, M3 transforms variable-specific continuous time deltas $\boldsymbol{\Delta t}_t$ via **Time2Vec** (Kazemi et al., 2019). For each feature $j$, Time2Vec projects $\Delta t_{t,j}$ into 1 linear and $K-1$ periodic frequency components ($K=4$):
+Rather than using simple scalar multiplication, M3 transforms variable-specific continuous time deltas $\boldsymbol{\Delta t}_t$ by adapting **Time2Vec** (Kazemi et al., 2019). For each feature $j$, Time2Vec projects $\Delta t_{t,j}$ into 1 linear and $K-1$ periodic frequency components ($K=4$):
 $$\text{Time2Vec}(\Delta t_{t,j})[k] = \begin{cases} \omega_{j,0} \Delta t_{t,j} + \varphi_{j,0}, & \text{if } k = 0 \\ \sin(\omega_{j,k} \Delta t_{t,j} + \varphi_{j,k}), & \text{if } 1 \le k < K \end{cases}$$
 The resulting $34 \times 4 = 136$ frequency features are concatenated with $\mathbf{v}_t$ (34) and $\mathbf{m}_t$ (34), yielding a $204$-dimensional tensor projected to $d_{\text{model}}=64$. Total trainable parameters: **163,841**.
 
@@ -166,8 +166,10 @@ Models were evaluated on the held-out test cohort across discrimination, calibra
 - **Early Warning Timing:** Mean lead time (hours prior to clinical onset for true positive alerts), $\ge$6-hour early warning rate, $\ge$1-hour early warning rate, and False Positive Rate per hour (FPR/h).
 - **PhysioNet Utility Score ($U_{\text{total}}$):** Official challenge metric awarding $+1.0$ for optimal early detection (1–6h prior), linearly tapering rewards for early alerts, and penalizing missed sepsis ($-2.0$) and false alarms ($-0.05/\text{hour}$).
 
-## 2.12 Statistical Analysis
-Uncertainty was quantified using patient-level non-parametric bootstrap resampling ($N = 1,000$ resamples). For every metric, 95% Confidence Intervals were computed using the 2.5th and 97.5th percentiles. Paired bootstrap differences ($\Delta = \text{Model}_{\text{A}} - \text{Model}_{\text{B}}$) were calculated to establish statistical significance ($\alpha = 0.05$).
+## 2.12 Statistical Analysis & Uncertainty Quantification
+Uncertainty was quantified using non-parametric patient-level bootstrap resampling ($B = 1,000$ resamples) on the held-out test cohort ($N = 20,000$). In each bootstrap iteration $b \in \{1, \dots, 1000\}$, $N$ patients were sampled with replacement from the test cohort. To preserve paired dependencies, all models (M1 through M5 and ablation variants) were evaluated on the exact same patient bootstrap resamples.
+
+For each individual model metric $\theta$, 95% Confidence Intervals were derived from the empirical 2.5th and 97.5th percentiles of the bootstrap distribution $[\theta^{(2.5)}, \theta^{(97.5)}]$. To determine statistical significance between model pairs (e.g., M3 vs. M5), paired difference distributions $\Delta^{(b)} = \theta_{\text{M5}}^{(b)} - \theta_{\text{M3}}^{(b)}$ were computed across all $B$ iterations. Two-tailed $p$-values were derived directly from the proportion of bootstrap iterations where the difference crossed zero ($p = 2 \cdot \min(P(\Delta \le 0), P(\Delta \ge 0))$), with $\alpha = 0.05$ establishing statistical significance.
 
 ## 2.13 Leakage and Reproducibility Controls
 All model checkpoints (`best_m3_frozen.pt` SHA256: `5b22607444f4a242a52d0d9337e60c4c63044542dc6796a4a9de78c5ef38057c`), configurations, evaluation scripts (`scripts/reproduce_final_m3.py`), and raw prediction arrays were locked and verified. Strict checkpoint loading (`strict=True`) was enforced for all evaluations.
