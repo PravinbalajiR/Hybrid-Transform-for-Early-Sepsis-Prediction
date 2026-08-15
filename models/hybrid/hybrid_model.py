@@ -18,7 +18,7 @@ import torch
 import torch.nn as nn
 from typing import Optional
 
-from models.transformer.transformer_encoder import SepsisTransformer
+from models.transformer.tact_model import TACTModel as SepsisTransformer
 from models.organ_branch.organ_encoders import PhysiologyAwareTemporalEncoders
 
 

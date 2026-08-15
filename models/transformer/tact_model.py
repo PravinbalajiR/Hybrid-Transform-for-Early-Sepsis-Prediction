@@ -97,6 +97,10 @@ class TACTModel(nn.Module):
         return logits
 
 
+# Backward compatibility alias
+SepsisTransformer = TACTModel
+
+
 if __name__ == "__main__":
     B, T, F = 4, 48, 34
     x_plain = torch.randn(B, T, F)
