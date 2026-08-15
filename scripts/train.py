@@ -301,7 +301,7 @@ def main():
 
     # 2. Build Model & Optimizer
     model = build_model(config, device)
-    if config.get("model") == "tact":
+    if config.get("model") in ["tact", "time_aware_transformer"]:
         ablation_mode = config.get("ablation_mode", "none")
         if ablation_mode == "focal_only":
             criterion = FocalLoss(pos_weight=pos_weight.item(), gamma=2.0, reduction="mean")

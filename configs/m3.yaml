@@ -7,3 +7,5 @@ hidden_dim: 64
 num_heads: 4
 layers: 3
 dropout: 0.1
+ablation_mode: none
+
