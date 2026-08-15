@@ -1,0 +1,6 @@
+Model,Input Vector,Encoders,Parameters,Key Innovation
+M1 (XGBoost),34 Means/LOCF,Decision Trees,Tree Ensembles,Gradient Boosted Baseline
+M2 (Plain Transformer),34 Imputed Vitals,3-Layer Transformer,"161,793",Causal Self-Attention
+M3 (Time-Aware Transformer),"102 (Val, Mask, Δt)",Time2Vec + Transformer,"163,841",Continuous Frequency Embeddings
+M4 (Organ Hybrid / MoE),102 + Organ Tokens,PATE Organ Encoders + Transformer,"198,433",Organ-Specific Subsystem Token Injection
+M5 (Multi-Hybrid),102 Triplet Vector,Disjoint Encoders + MoE Router,"224,713",Multi-Expert Gating & Adaptive Fusion

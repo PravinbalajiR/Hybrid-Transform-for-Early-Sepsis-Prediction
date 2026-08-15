@@ -1,0 +1,4 @@
+Variant,AUROC,AUPRC,F1,Utility
+M4 Full (Prefix Token Injection),0.9412,0.318,0.264,-1.842
+M4-no-prefix (Late Fusion),0.938,0.295,0.241,-1.95
+M4-no-forecast (Single Task),0.9405,0.312,0.258,-1.87

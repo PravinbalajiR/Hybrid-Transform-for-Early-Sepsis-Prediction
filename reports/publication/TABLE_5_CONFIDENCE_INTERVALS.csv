@@ -1,0 +1,6 @@
+Metric,M3 Point Estimate,95% CI Lower,95% CI Upper
+AUROC,0.9617,0.9495,0.9727
+AUPRC,0.4231,0.3359,0.5185
+F1 Score,0.411,0.342,0.478
+Mean Lead Time (h),5.7,5.0,6.5
+PhysioNet Utility,-0.9535,-1.12,-0.81

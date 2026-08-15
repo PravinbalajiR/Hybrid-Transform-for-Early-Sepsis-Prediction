@@ -1,0 +1,18 @@
+{
+    "project": "Early Sepsis Prediction using Time-Aware Hybrid Transformers",
+    "timestamp": "2026-08-15 15:48:15",
+    "git_commit": "3e3bbf5",
+    "primary_model": "M3 (Time-Aware Transformer)",
+    "m3_checkpoint_path": "experiments/final_m3_frozen/best_m3_frozen.pt",
+    "m3_checkpoint_sha256": "5b22607444f4a242a52d0d9337e60c4c63044542dc6796a4a9de78c5ef38057c",
+    "models_audited": [
+        "M1",
+        "M2",
+        "M3",
+        "M4",
+        "M5"
+    ],
+    "data_leakage_status": "PASS (0 Patient Overlap)",
+    "utility_audit_status": "PASS (Exact Reference Match)",
+    "publication_readiness": "READY FOR PAPER"
+}
