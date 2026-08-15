@@ -2,22 +2,11 @@
 
 # Research Highlights
 
-* Temporal information improved early sepsis prediction from irregular ICU data. (76 chars)
-* Observation patterns provided additional information for sepsis prediction. (76 chars)
-* Combining temporal and observation information improved overall performance. (79 chars)
-* The proposed model provided earlier warnings with fewer false positives. (74 chars)
-* Greater architectural complexity did not consistently improve prediction. (76 chars)
-
----
-
-### Character Count Verification Log:
-1. Bullet 1: 76 / 85 max characters (PASS)
-2. Bullet 2: 76 / 85 max characters (PASS)
-3. Bullet 3: 79 / 85 max characters (PASS)
-4. Bullet 4: 74 / 85 max characters (PASS)
-5. Bullet 5: 76 / 85 max characters (PASS)
-
-*All bullets are strictly <= 85 characters, contain zero specialized acronyms, and focus exclusively on empirical research findings.*
+* Temporal information improved early sepsis prediction from irregular ICU data.
+* Observation patterns provided additional information for sepsis prediction.
+* Combining temporal and observation information improved overall performance.
+* The proposed model provided earlier warnings with fewer false positives.
+* Greater architectural complexity did not consistently improve prediction.
 
 
 ---
@@ -322,7 +311,7 @@ These results indicate that careful representation of temporal irregularity and 
 
 5. **Kazemi, S. M., Goel, R., Eghbali, S., Ramanan, K., Sahai, J., Thakur, S., & Poole, D. (2019).** Time2Vec: Learning a vector representation of time. *arXiv preprint arXiv:1907.05321*. (Presented at NeurIPS Workshop on Representation Learning).
 
-6. **Komorowski, M., Celi, L. A., Badawi, O., Gordon, A. C., & Faisal, A. A. (2020).** The Artificial Intelligence Clinician learns optimal treatment strategies for sepsis in intensive care. *Nature Medicine*, 24(11), 1716-1720. https://doi.org/10.1038/s41591-018-0213-5
+6. **Komorowski, M., Celi, L. A., Badawi, O., Gordon, A. C., & Faisal, A. A. (2018).** The Artificial Intelligence Clinician learns optimal treatment strategies for sepsis in intensive care. *Nature Medicine*, 24(11), 1716-1720. https://doi.org/10.1038/s41591-018-0213-5
 
 7. **Kumar, A., Roberts, D., Wood, K. E., Light, B., Parrillo, J. E., Sharma, S., Suppes, R., Feinstein, D., Zanotti, S., Taiberg, L., & Gurka, D. (2006).** Duration of hypotension before initiation of effective antimicrobial therapy is the critical determinant of survival in human septic shock. *Critical Care Medicine*, 34(6), 1589-1596. https://doi.org/10.1097/01.CCM.0000217961.75225.E9
 
@@ -330,7 +319,7 @@ These results indicate that careful representation of temporal irregularity and 
 
 9. **Mancini, A., et al. (2023).** Early recognition of sepsis in the emergency department and ICU using dynamic AI risk scoring algorithms. *The Lancet Digital Health*, 5(8), e512-e522. https://doi.org/10.1016/S2589-7500(23)00112-4
 
-10. **Morrill, M., Kormilitzin, A., Nevado-Holgado, A., Lyons, T., & Howison, S. (2021).** The signature method for the prediction of sepsis from clinical time series. *IEEE Transactions on Biomedical Engineering*, 68(8), 2478-2487. https://doi.org/10.1109/TBME.2020.3044421
+10. **Morrill, M., Kormilitzin, A., Nevado-Holgado, A., Lyons, T., & Howison, S. (2021).** The signature method for the prediction of sepsis from clinical time series. *IEEE Transactions on Biomedical Engineering*, 68(8), 2478-2477. https://doi.org/10.1109/TBME.2020.3044421
 
 11. **Reyna, M. A., Josef, C. S., Jeter, R., Shashikumar, S. P., Westover, M. B., Nemati, S., Clifford, G. D., & Sharma, A. (2019).** Early prediction of sepsis from clinical data: the PhysioNet/Computing in Cardiology Challenge 2019. *Critical Care Medicine*, 47(11), e945-e952. https://doi.org/10.1097/CCM.0000000000004052
 

@@ -10,7 +10,7 @@
 
 5. **Kazemi, S. M., Goel, R., Eghbali, S., Ramanan, K., Sahai, J., Thakur, S., & Poole, D. (2019).** Time2Vec: Learning a vector representation of time. *arXiv preprint arXiv:1907.05321*. (Presented at NeurIPS Workshop on Representation Learning).
 
-6. **Komorowski, M., Celi, L. A., Badawi, O., Gordon, A. C., & Faisal, A. A. (2020).** The Artificial Intelligence Clinician learns optimal treatment strategies for sepsis in intensive care. *Nature Medicine*, 24(11), 1716-1720. https://doi.org/10.1038/s41591-018-0213-5
+6. **Komorowski, M., Celi, L. A., Badawi, O., Gordon, A. C., & Faisal, A. A. (2018).** The Artificial Intelligence Clinician learns optimal treatment strategies for sepsis in intensive care. *Nature Medicine*, 24(11), 1716-1720. https://doi.org/10.1038/s41591-018-0213-5
 
 7. **Kumar, A., Roberts, D., Wood, K. E., Light, B., Parrillo, J. E., Sharma, S., Suppes, R., Feinstein, D., Zanotti, S., Taiberg, L., & Gurka, D. (2006).** Duration of hypotension before initiation of effective antimicrobial therapy is the critical determinant of survival in human septic shock. *Critical Care Medicine*, 34(6), 1589-1596. https://doi.org/10.1097/01.CCM.0000217961.75225.E9
 
@@ -18,7 +18,7 @@
 
 9. **Mancini, A., et al. (2023).** Early recognition of sepsis in the emergency department and ICU using dynamic AI risk scoring algorithms. *The Lancet Digital Health*, 5(8), e512-e522. https://doi.org/10.1016/S2589-7500(23)00112-4
 
-10. **Morrill, M., Kormilitzin, A., Nevado-Holgado, A., Lyons, T., & Howison, S. (2021).** The signature method for the prediction of sepsis from clinical time series. *IEEE Transactions on Biomedical Engineering*, 68(8), 2478-2487. https://doi.org/10.1109/TBME.2020.3044421
+10. **Morrill, M., Kormilitzin, A., Nevado-Holgado, A., Lyons, T., & Howison, S. (2021).** The signature method for the prediction of sepsis from clinical time series. *IEEE Transactions on Biomedical Engineering*, 68(8), 2478-2477. https://doi.org/10.1109/TBME.2020.3044421
 
 11. **Reyna, M. A., Josef, C. S., Jeter, R., Shashikumar, S. P., Westover, M. B., Nemati, S., Clifford, G. D., & Sharma, A. (2019).** Early prediction of sepsis from clinical data: the PhysioNet/Computing in Cardiology Challenge 2019. *Critical Care Medicine*, 47(11), e945-e952. https://doi.org/10.1097/CCM.0000000000004052
 
