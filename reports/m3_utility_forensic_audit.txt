@@ -1,0 +1,11 @@
+UTILITY FORENSIC AUDIT REPORT
+======================================================
+Repository Implementation  : evaluation/utility_score.py (compute_utility_score)
+Independent Reference Code : reference_utility_score
+Test Set Prediction Check  : Threshold 0.50
+
+Achieved Repo Utility Score: -1.053711
+Achieved Ref Utility Score : -1.053711
+Absolute Difference        : 0.0000000000
+Tolerance Threshold        : 1e-6
+Audit Status               : PASSED (PERFECT AGREEMENT, ZERO DISCREPANCY)

@@ -1,0 +1,12 @@
+FINAL M3 AUDIT ENVIRONMENT REPORT
+Date: 2026-08-15
+Operating System: Windows-10-10.0.26200-SP0
+Python Version: 3.11.2
+PyTorch Version: 2.13.0+cpu
+CUDA Available: False
+CUDA Device: CPU
+Selected Checkpoint Original Path: C:\Users\gokul\Desktop\sepsis prediction\Sepsis-Hybrid-Transformer\experiments\time_aware_transformer\run_20260815_061429\checkpoints\best_time_aware_transformer_auroc0.976_epoch20.pt
+Protected Frozen Checkpoint Path : C:\Users\gokul\Desktop\sepsis prediction\Sepsis-Hybrid-Transformer\experiments\final_m3_frozen\best_m3_frozen.pt
+Checkpoint SHA256 Hash          : 5b22607444f4a242a52d0d9337e60c4c63044542dc6796a4a9de78c5ef38057c
+Git Branch                      : paper-v1.0
+Git Commit                      : 47caab0

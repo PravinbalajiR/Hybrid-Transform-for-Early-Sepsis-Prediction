@@ -1,0 +1,10 @@
+M3 CHECKPOINT FORENSICS REPORT
+======================================================
+Checkpoint File   : C:\Users\gokul\Desktop\sepsis prediction\Sepsis-Hybrid-Transformer\experiments\final_m3_frozen\best_m3_frozen.pt
+SHA256 Hash       : 5b22607444f4a242a52d0d9337e60c4c63044542dc6796a4a9de78c5ef38057c
+Model Epoch       : 20
+Missing Keys      : 0
+Unexpected Keys   : 0
+Strict Load Status: PASSED (STRICT=TRUE)
+Total Parameters  : 116049
+Validation Target : Val AUROC (0.976)

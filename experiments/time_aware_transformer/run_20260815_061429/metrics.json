@@ -1,0 +1,17 @@
+{
+    "split": "test_time_aware_transformer",
+    "auroc": 0.9616635676495079,
+    "auprc": 0.42271490331351613,
+    "f1": 0.3834230418541722,
+    "precision": 0.27190055064241614,
+    "recall": 0.6500448788271667,
+    "threshold": 0.5,
+    "ece": 0.04065498403036819,
+    "timing_n_tp": 741,
+    "timing_mean_lead_h": 7.338731443994602,
+    "timing_median_lead_h": 3.0,
+    "timing_pct_early_6h": 42.7800269905533,
+    "timing_pct_early_1h": 60.32388663967612,
+    "timing_pct_late": 12.280701754385964,
+    "utility_score": -1.0933760683760676
+}

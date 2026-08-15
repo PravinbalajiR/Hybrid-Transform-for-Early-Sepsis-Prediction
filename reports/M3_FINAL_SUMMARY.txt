@@ -1,0 +1,25 @@
+M3 FINAL SCIENTIFIC AUDIT SUMMARY
+=======================================================
+1. Checkpoint Used        : experiments/final_m3_frozen/best_m3_frozen.pt
+2. Architecture           : TACTModel (Time-Aware Transformer, input_dim=102, d_model=64, nhead=4, layers=3)
+3. Locked Threshold       : 0.60 (SELECTED ON VALIDATION ONLY)
+4. AUROC                  : 0.9617 (95% CI: [0.9495, 0.9727])
+5. AUPRC                  : 0.4231 (95% CI: [0.3359, 0.5185])
+6. F1 Score               : 0.4110 (95% CI: [0.3923, 0.4313])
+7. Precision (PPV)        : 0.3099 (95% CI: [0.2927, 0.3282])
+8. Recall (Sensitivity)   : 0.6103 (95% CI: [0.5816, 0.6403])
+9. ECE                    : 0.0407
+10. PhysioNet Utility     : -0.9535 (95% CI: [-1.0328, -0.8649])
+11. Mean Lead Time        : 5.7 hours (95% CI: [5.0h, 6.5h])
+12. Median Lead Time      : 2.0 hours
+13. >=6h Early Detection   : 37.6%
+14. >=1h Early Detection   : 56.5%
+15. FPR / hour            : 0.0183 (1.83%)
+16. 95% Confidence Intervals: Computed via 1,000 Patient-Level Bootstrap Resamples
+17. Utility Audit Status  : PASSED (Independent reference implementation matches repository code perfectly)
+18. Data Leakage Status   : PASSED (0 Patient Overlap, Normalization fit on Train only)
+19. Test Set Influence    : PASSED (Thresholds selected on Validation set ONLY)
+20. Reproducibility Status: PASSED (Fully reproducible via scripts/reproduce_final_m3.py)
+=======================================================
+SCIENTIFIC CONCLUSION: GO FOR PAPER
+=======================================================

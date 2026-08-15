@@ -1,0 +1,12 @@
+M3 ARCHITECTURE VERIFIED SPECIFICATION
+======================================================
+Input Vector       : Triplet Encoding [34 Values, 34 Masks, 34 Time Deltas] -> 102 Dim
+Time Encoding      : Time2Vec Continuous Frequency Embedding (k=4) -> 136 Dim
+Projected Dimension: 68 + 136 = 204 Dim -> Linear Projection -> d_model (64)
+Transformer Core   : 3 Layers, 4 Attention Heads, Pre-LayerNorm, Dropout 0.1
+Prediction Head    : Linear(64, 1) -> Sigmoid Output per Hourly Timestep
+
+PARAMETER COUNT:
+Total Parameters    : 116,049
+Trainable Parameters: 116,049
+Strict Loading      : ZERO Missing Keys / ZERO Unexpected Keys (VERIFIED)

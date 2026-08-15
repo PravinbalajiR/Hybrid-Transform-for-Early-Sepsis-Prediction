@@ -1,0 +1,6 @@
+Component,Dimension,Description
+Input Triplet,102,34 Values + 34 Masks + 34 Time Deltas
+Time2Vec Embedding,136,Continuous sine/cosine frequency representation (k=4)
+Projection Layer,64,Linear(204 -> 64)
+Transformer Encoder,64,"3 Layers, 4 Attention Heads, Pre-LayerNorm, Dropout 0.1"
+Prediction Head,1,Linear(64 -> 1) per hourly step

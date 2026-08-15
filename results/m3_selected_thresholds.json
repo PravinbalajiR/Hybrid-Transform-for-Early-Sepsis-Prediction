@@ -1,0 +1,7 @@
+{
+    "utility_optimal": 0.44,
+    "f1_optimal": 0.78,
+    "early_warning": 0.17,
+    "balanced_clinical": 0.6,
+    "balanced_rule_note": "Closest feasible operating point (Fallback th=0.60)"
+}

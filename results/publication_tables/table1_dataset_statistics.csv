@@ -1,0 +1,4 @@
+Split,Patients,Sepsis Rate,Source
+Train,18302,8.31%,Set A
+Validation,2034,8.31%,Set A
+Test,20000,5.33%,Set B (Held-Out)

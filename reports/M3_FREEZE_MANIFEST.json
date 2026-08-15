@@ -1,0 +1,20 @@
+{
+    "git_commit": "47caab0",
+    "git_branch": "paper-v1.0",
+    "checkpoint_path": "C:\\Users\\gokul\\Desktop\\sepsis prediction\\Sepsis-Hybrid-Transformer\\experiments\\final_m3_frozen\\best_m3_frozen.pt",
+    "checkpoint_sha256": "5b22607444f4a242a52d0d9337e60c4c63044542dc6796a4a9de78c5ef38057c",
+    "architecture": "TACTModel (SepsisTimeAwareTransformer)",
+    "train_patients": 18302,
+    "val_patients": 2034,
+    "test_patients": 20000,
+    "dataset_cache": "C:\\Users\\gokul\\Desktop\\sepsis prediction\\Sepsis-Hybrid-Transformer\\data\\processed\\full_dataset_cache.pt",
+    "random_seed": 42,
+    "features": 34,
+    "input_dim": 102,
+    "d_model": 64,
+    "nhead": 4,
+    "num_layers": 3,
+    "dropout": 0.1,
+    "ablation_mode": "none",
+    "epoch": 20
+}

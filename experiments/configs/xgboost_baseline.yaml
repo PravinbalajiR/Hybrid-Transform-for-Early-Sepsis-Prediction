@@ -1,0 +1,41 @@
+# Experiment configuration — XGBoost baseline
+# Week 5-6 target
+
+experiment:
+  name: "xgboost_baseline"
+  description: >
+    XGBoost baseline on static aggregated features.
+    Uses last-observation-carried-forward (LOCF) imputation.
+    No organ grouping, no temporal modeling.
+
+data:
+  set_a: "../../training_setA/training"
+  set_b: "../../training_setB/training_setB"
+  splits_dir: "../data/splits"
+  processed_dir: "../data/processed"
+
+features:
+  type: "static_aggregate"
+  aggregations: ["mean", "std", "min", "max", "last", "n_observed"]
+  include_demographics: true
+
+model:
+  type: "xgboost"
+  params:
+    n_estimators: 500
+    max_depth: 6
+    learning_rate: 0.05
+    subsample: 0.8
+    colsample_bytree: 0.8
+    scale_pos_weight: 7   # approx ratio of neg/pos for class imbalance
+    eval_metric: "auc"
+    use_label_encoder: false
+
+training:
+  random_seed: 42
+  threshold_search: true   # grid-search threshold for utility score
+
+evaluation:
+  primary: "utility_score"
+  secondary: ["auroc", "auprc", "f1"]
+  output_dir: "../experiments/logs/xgboost_baseline"

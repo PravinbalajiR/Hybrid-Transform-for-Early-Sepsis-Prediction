@@ -1,0 +1,11 @@
+THRESHOLD-INDEPENDENT TEST METRICS REPORT
+======================================================
+Frozen Model   : best_m3_frozen.pt
+Test Patients  : 20,000
+Total Timesteps: 753,927
+
+GLOBAL DISCRIMINATION & CALIBRATION METRICS:
+  -> AUROC       : 0.9617
+  -> AUPRC       : 0.4231
+  -> Brier Score : 0.0213
+  -> ECE         : 0.0407

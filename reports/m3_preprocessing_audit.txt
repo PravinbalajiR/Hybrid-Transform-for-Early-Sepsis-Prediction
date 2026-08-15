@@ -1,0 +1,17 @@
+PREPROCESSING AUDIT REPORT
+======================================================
+Physiological Features   : 34 Variables
+Observation Mask Features: 34 Masks
+Time Delta Features      : 34 Elapsed Hour Deltas
+Total Features per Step  : 102 Features
+Normalizer Fit Split     : TRAINING SPLIT ONLY (zero test data leakage)
+Patient Split Strategy   : Hospital-Stratified (Set A -> Train/Val, Set B -> Test)
+
+PATIENT COHORT NUMBERS:
+Train Patients          : 18,302
+Validation Patients     : 2,034
+Test Patients           : 20,000
+Positive Test Patients  : 1,066 (5.33%)
+Negative Test Patients  : 18,934 (94.67%)
+Total Test Hours        : 753,927
+Patient Leakage Check   : PASSED (0 Overlap across splits)
