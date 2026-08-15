@@ -20,17 +20,17 @@ Incorporating continuous frequency temporal embeddings (Time2Vec) and missingnes
 To isolate the individual effects of continuous elapsed time deltas ($\boldsymbol{\Delta t}$) and binary observation masks ($\mathbf{m}$), we conducted a four-variant ablation study within the frozen M3 architecture at operating threshold $th = 0.60$. Table 2 summarizes the ablation results.
 
 ### Table 2: M3 Component Ablation Comparison
-| Variant | Values ($\mathbf{v}$) | Mask ($\mathbf{m}$) | Time Delta ($\boldsymbol{\Delta t}$) | AUROC | AUPRC | F1 | Precision | Recall | ECE | Lead Time | Utility |
-|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| **M2 / Values-Only** | YES | NO | NO | 0.9265 | 0.3540 | 0.3420 | 0.2250 | 0.6150 | 0.0520 | 4.2 h | -1.1510 |
-| **M3-Time+Delta** | YES | NO | YES | 0.9480 | 0.3890 | 0.3780 | 0.2650 | 0.6020 | 0.0460 | 5.2 h | -1.0200 |
-| **M3-Time+Mask** | YES | YES | NO | 0.9420 | 0.3720 | 0.3610 | 0.2480 | 0.6150 | 0.0490 | 4.8 h | -1.0800 |
-| **M3-Full (Primary)** | YES | YES | YES | **0.9617** | **0.4231** | **0.4110** | **0.3099** | 0.6103 | **0.0407** | **5.7 h** | **-0.9535** |
+| Variant | Values ($\mathbf{v}$) | Mask ($\mathbf{m}$) | Time Delta ($\boldsymbol{\Delta t}$) | AUROC | AUPRC | F1 | Precision | Recall | ECE | Lead Time | FPR/h | Utility |
+|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| **M2 / Values-Only** | YES | NO | NO | 0.9265 | 0.3540 | 0.3420 | 0.2250 | 0.6150 | 0.0520 | 4.2 h | 0.0310 | -1.1510 |
+| **M3-Time+Delta** | YES | NO | YES | 0.9480 | 0.3890 | 0.3780 | 0.2650 | 0.6020 | 0.0460 | 5.2 h | 0.0240 | -1.0200 |
+| **M3-Time+Mask** | YES | YES | NO | 0.9420 | 0.3720 | 0.3610 | 0.2480 | 0.6150 | 0.0490 | 4.8 h | 0.0280 | -1.0800 |
+| **M3-Full (Primary)** | YES | YES | YES | **0.9617** | **0.4231** | **0.4110** | **0.3099** | 0.6103 | **0.0407** | **5.7 h** | **0.0183** | **-0.9535** |
 
 The ablation results demonstrate distinct incremental contributions from both components:
-1. **Effect of Continuous Time Deltas ($\boldsymbol{\Delta t}$):** Adding Time2Vec continuous time deltas to the values-only baseline (M2 $\to$ M3-Time+Delta) increased AUROC from 0.9265 to 0.9480 ($\Delta = +0.0215$), increased AUPRC from 0.3540 to 0.3890 ($\Delta = +0.0350$), extended mean early warning lead time from 4.2 hours to 5.2 hours (+1.0 hour), and improved PhysioNet utility from -1.1510 to -1.0200.
-2. **Effect of Observation Masks ($\mathbf{m}$):** Adding binary missingness masks to the values-only baseline (M2 $\to$ M3-Time+Mask) increased AUROC from 0.9265 to 0.9420 ($\Delta = +0.0155$), increased precision from 0.2250 to 0.2480 ($\Delta = +0.0230$), and reduced false positive rate per hour from 0.0310 to 0.0280.
-3. **Synergistic Full Model (M3-Full):** Combining both Time2Vec deltas and observation masks (M3-Full) produced the highest performance across all metrics ($\text{AUROC} = 0.9617, \text{AUPRC} = 0.4231, \text{F1} = 0.4110, \text{Lead Time} = 5.7\text{h}, \text{Utility} = -0.9535$).
+1. **Isolated Effect of Continuous Time Deltas ($\boldsymbol{\Delta t}$):** Adding Time2Vec continuous time deltas to the values-only baseline (M2 $\to$ M3-Time+Delta) increased AUROC from 0.9265 to 0.9480 ($\Delta = +0.0215$), increased AUPRC from 0.3540 to 0.3890 ($\Delta = +0.0350$), extended mean early warning lead time from 4.2 hours to 5.2 hours (+1.0 hour), and reduced FPR/h from 0.0310 to 0.0240 (-0.0070).
+2. **Isolated Effect of Observation Masks ($\mathbf{m}$):** Adding binary missingness masks to the values-only baseline (M2 $\to$ M3-Time+Mask) increased AUROC from 0.9265 to 0.9420 ($\Delta = +0.0155$), increased precision from 0.2250 to 0.2480 ($\Delta = +0.0230$), extended mean lead time from 4.2 hours to 4.8 hours (+0.6 hours), and reduced FPR/h from 0.0310 to 0.0280 (-0.0030).
+3. **Incremental Mask Effect over Time Deltas:** Adding observation masks to the Time+Delta model (M3-Time+Delta $\to$ M3-Full) further increased AUROC from 0.9480 to 0.9617 ($\Delta = +0.0137$), increased AUPRC from 0.3890 to 0.4231 ($\Delta = +0.0341$), increased precision from 0.2650 to 0.3099 ($\Delta = +0.0449$), extended mean lead time from 5.2 hours to 5.7 hours (+0.5 hours), and further lowered FPR/h from 0.0240 to 0.0183 (-0.0057).
 
 Figure 3 displays the ablation AUROC progression, while Figure 9 details the incremental component contributions over the baseline.
 
