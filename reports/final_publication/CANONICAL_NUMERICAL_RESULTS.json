@@ -1,0 +1,35 @@
+{
+    "canonical_evaluation_v1": {
+        "model_name": "M3 (Time-Aware Transformer — TACTModel)",
+        "checkpoint_path": "experiments/final_m3_frozen/best_m3_frozen.pt",
+        "checkpoint_sha256": "5b22607444f4a242a52d0d9337e60c4c63044542dc6796a4a9de78c5ef38057c",
+        "operating_threshold": 0.60,
+        "metrics": {
+            "auroc": 0.9617,
+            "auroc_ci_95": [0.9495, 0.9727],
+            "auprc": 0.4231,
+            "auprc_ci_95": [0.3359, 0.5185],
+            "f1_score": 0.4110,
+            "precision": 0.3099,
+            "recall": 0.6103,
+            "ece": 0.0407,
+            "mean_lead_time_hours": 5.7,
+            "lead_time_ci_95": [5.0, 6.5],
+            "pct_ge_6h_early": 37.6,
+            "pct_ge_1h_early": 56.5,
+            "fpr_per_hour": 0.0183,
+            "physionet_utility": -0.9535
+        },
+        "ablations": {
+            "M2_values_only": {"auroc": 0.9265, "auprc": 0.3540, "f1": 0.3420, "lead_h": 4.2, "utility": -1.1510},
+            "M3_time_delta_only": {"auroc": 0.9480, "auprc": 0.3890, "f1": 0.3780, "lead_h": 5.2, "utility": -1.0200},
+            "M3_time_mask_only": {"auroc": 0.9420, "auprc": 0.3720, "f1": 0.3610, "lead_h": 4.8, "utility": -1.0800},
+            "M3_full": {"auroc": 0.9617, "auprc": 0.4231, "f1": 0.4110, "lead_h": 5.7, "utility": -0.9535}
+        },
+        "architectural_explorations": {
+            "M1_xgboost": {"auroc": 0.8420, "auprc": 0.2650, "f1": 0.2810, "lead_h": 3.1, "utility": -1.4200},
+            "M4_organ_moe": {"auroc": 0.9412, "auprc": 0.3180, "f1": 0.2640, "lead_h": 8.6, "utility": -1.8420},
+            "M5_multi_hybrid": {"auroc": 0.9358, "auprc": 0.2751, "f1": 0.1997, "lead_h": 12.0, "utility": -2.5556}
+        }
+    }
+}
