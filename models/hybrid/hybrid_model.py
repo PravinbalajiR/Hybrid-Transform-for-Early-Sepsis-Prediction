@@ -18,7 +18,7 @@ import torch
 import torch.nn as nn
 from typing import Optional
 
-from models.transformer.tact_model import TACTModel
+from models.transformer.transformer_encoder import SepsisTransformer
 from models.organ_branch.organ_encoders import PhysiologyAwareTemporalEncoders
 
 
@@ -42,17 +42,15 @@ class SepsisHybridModel(nn.Module):
         self.ablation_mode = ablation_mode
         self.d_model = d_model
         
-        # 1. Temporal Branch — uses TACTModel's embedding + encoder
-        # We give it max_len+6 so positional encoding covers organ prefix tokens too
-        self.temporal_branch = TACTModel(
+        # 1. Temporal Branch (Initializes from M3 logic)
+        self.temporal_branch = SepsisTransformer(
             input_dim=input_dim,
             d_model=d_model,
             nhead=nhead,
             num_layers=num_layers,
             dim_feedforward=dim_feedforward,
             dropout=dropout,
-            max_len=max_len + 6,  # +6 for the 6 organ prefix tokens
-            ablation_mode="mask_delta"  # M4 always uses the full triplet
+            max_len=max_len + 6 # +6 for the organ tokens
         )
         
         # 2. Knowledge Branch (OATEs)

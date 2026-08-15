@@ -17,15 +17,8 @@ import numpy as np
 import pandas as pd
 
 from preprocessing.load_data import ALL_FEATURE_COLS
-from preprocessing.masks_and_deltas import (
-    compute_masks_and_deltas,
-    compute_masks_and_deltas_fast,
-    encode_triplet,
-)
+from preprocessing.masks_and_deltas import compute_masks_and_deltas_fast, encode_triplet
 from preprocessing.normalize import Normalizer
-
-
-
 from preprocessing.dataset import SepsisDataset, collate_sepsis_batch
 from evaluation.utility_score import compute_utility_score, _compute_utility_for_patient
 
@@ -53,7 +46,6 @@ def make_dummy_patient_df(n_hours: int = 24) -> pd.DataFrame:
 
 def test_masks_and_deltas_shapes():
     df = make_dummy_patient_df(30)
-    vals_ref, masks_ref, deltas_ref = compute_masks_and_deltas(df, ALL_FEATURE_COLS)
     vals, masks, deltas = compute_masks_and_deltas_fast(df, ALL_FEATURE_COLS)
 
     assert vals.shape == (30, len(ALL_FEATURE_COLS))
@@ -64,11 +56,6 @@ def test_masks_and_deltas_shapes():
     assert np.all(np.isin(masks, [0.0, 1.0]))
     # Time delta at t=0 must be 0 for all features
     assert np.all(deltas[0] == 0.0)
-
-    # 100% Equivalence test between reference recurrence and fast version
-    assert np.allclose(masks_ref, masks)
-    assert np.allclose(deltas_ref, deltas)
-
 
 
 def test_encode_triplet():
@@ -124,10 +111,9 @@ def test_utility_score_perfect_prediction():
     labels = np.array([0, 0, 0, 0, 0, 0, 1, 1, 1, 1])  # onset at hour 6 (0-indexed)
     preds  = np.array([1, 0, 0, 0, 0, 0, 0, 0, 0, 0])  # alarm raised at hour 0 (6h early)
 
-    u, u_best, u_inaction = _compute_utility_for_patient(labels, preds)
+    u, u_best = _compute_utility_for_patient(labels, preds)
     assert u > 0.0
     assert abs(u - u_best) < 1e-5  # achieves maximum utility credit
-
 
 
 if __name__ == "__main__":

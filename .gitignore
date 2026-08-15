@@ -10,27 +10,17 @@ venv/
 env/
 ENV/
 
-# Archives & Zips
-*.zip
-*.tar.gz
-*.7z
-
 # Dataset & Large Files (PhysioNet data use agreement & size limits)
 data/raw/
 data/processed/
-data/splits/
 *.psv
-*.csv
 
-# Model Checkpoints & Experiments
-experiments/
-debug/
+# Model Checkpoints
 checkpoints/
 *.pth
 *.pt
 *.ckpt
 *.onnx
-*.bin
 
 # TensorBoard & Experiment Logs
 runs/
@@ -56,3 +46,6 @@ figures/generated/
 .DS_Store
 Thumbs.db
 
+# Archives & Temporary
+*.zip
+debug/

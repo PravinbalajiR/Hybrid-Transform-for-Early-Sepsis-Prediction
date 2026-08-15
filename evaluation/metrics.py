@@ -65,15 +65,10 @@ def compute_classification_metrics(
 def compute_timing_analysis(
     all_labels:      List[np.ndarray],
     all_predictions: List[np.ndarray],
-    dt_early:        int = 12,  # max valid hours before onset
-    dt_late:         int = 3,   # max valid hours after onset
 ) -> dict:
     """
-    For true-positive sepsis patients (alarm raised within valid clinical window),
-    compute statistics on how many hours BEFORE onset the first valid alarm was raised.
-
-    Alarms > 12h before onset are premature non-actionable alarms (outside utility window).
-    Alarms > 3h after onset are late detections.
+    For true-positive sepsis patients (alarm raised AND sepsis occurred),
+    compute statistics on how many hours BEFORE onset the alarm was raised.
 
     Negative value = alarm raised AFTER onset (late detection).
     Positive value = alarm raised BEFORE onset (early detection).
@@ -94,21 +89,8 @@ def compute_timing_analysis(
         if len(alarm_times) == 0:
             continue  # false negative — no alarm
 
-        # Filter for alarms within the valid utility evaluation window [t_onset - 12, t_onset + 3]
-        valid_alarms = [t for t in alarm_times if (t_onset - dt_early) <= t <= (t_onset + dt_late)]
-
-        if not valid_alarms:
-            # First alarm was either > 12h premature or > 3h late
-            # If there's any alarm prior to t_onset + dt_late, take the first one
-            first_alarm = alarm_times[0]
-            if first_alarm <= t_onset + dt_late:
-                # Cap premature lead time at dt_early (12h) for reporting
-                lead = min(float(dt_early), float(t_onset - first_alarm))
-                lead_times.append(lead)
-            continue
-
-        t_alarm = valid_alarms[0]
-        lead_times.append(float(t_onset - t_alarm))   # positive = early
+        t_alarm = int(alarm_times[0])
+        lead_times.append(t_onset - t_alarm)   # positive = early
 
     if not lead_times:
         return {"n_tp": 0, "mean_lead_h": None, "median_lead_h": None}
@@ -122,7 +104,6 @@ def compute_timing_analysis(
         "pct_early_1h":   float((lt >= 1).mean() * 100),   # % caught ≥1h early
         "pct_late":       float((lt < 0).mean() * 100),    # % caught after onset
     }
-
 
 
 # ---------------------------------------------------------------------------

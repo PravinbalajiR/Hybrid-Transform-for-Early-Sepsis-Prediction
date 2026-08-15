@@ -35,40 +35,25 @@ def load_config(config_path: str) -> dict:
 
 
 def build_model(config: dict, device: torch.device) -> nn.Module:
-    model_type = str(config.get("model", "m2")).lower()
+    model_type = config.get("model", "plain_transformer")
     hidden_dim = config.get("hidden_dim", 64)
     num_heads = config.get("num_heads", 4)
     layers = config.get("layers", 3)
     ablation_mode = config.get("ablation_mode", "none")
     
-    if "m3f" in model_type or "m3_final" in model_type:
-        from models.transformer.m3f_model import M3FinalModel
-        return M3FinalModel(
-            input_dim=102,
-            num_features=config.get("num_features", 34),
-            d_model=config.get("d_model", hidden_dim),
+    if model_type == "hybrid":
+        model = SepsisHybridModel(
+            input_dim=34 * 3,
+            d_model=hidden_dim,
             nhead=num_heads,
             num_layers=layers,
-            dim_feedforward=config.get("dim_feedforward", 128),
-            dropout=config.get("dropout", 0.1),
+            ablation_mode=ablation_mode,
         ).to(device)
+        return model
 
-    if "m3_recovered" in model_type:
-        from models.transformer.m3_recovered_model import M3RecoveredModel
-        return M3RecoveredModel(
-            input_dim=102,
-            d_model=config.get("d_model", hidden_dim),
-            nhead=num_heads,
-            num_layers=layers,
-            dim_feedforward=config.get("dim_feedforward", 128),
-            dropout=config.get("dropout", 0.1),
-        ).to(device)
-
-
-    if "m2" in model_type or "plain" in model_type:
+    if model_type == "plain_transformer":
         input_dim = 34
-    elif any(k in model_type for k in ["m3", "time_aware", "tact"]):
-        # All M3 variants (m3, m3_mask_only, m3_delta_only) use triplet input
+    elif model_type in ["time_aware_transformer", "tact"]:
         input_dim = 34 * 3
     else:
         raise ValueError(f"Unknown model type: {model_type}")
@@ -78,13 +63,10 @@ def build_model(config: dict, device: torch.device) -> nn.Module:
         d_model=hidden_dim,
         nhead=num_heads,
         num_layers=layers,
-        dim_feedforward=config.get("dim_feedforward", hidden_dim * 2),
-        dropout=config.get("dropout", 0.1),
         ablation_mode=ablation_mode,
     ).to(device)
-
+    
     return model
-
 
 
 def save_plots(metrics_history: dict, save_dir: Path):
@@ -266,21 +248,14 @@ def main():
         # We don't exit here so local testing works, but it's strongly discouraged.
 
     # 1. Load Precomputed Cached Dataset
-    possible_cache_paths = [
-        Path(__file__).parent.parent / "data" / "processed" / "full_dataset_cache.pt",
-        Path("/content/drive/MyDrive/Sepsis-Hybrid-Transformer/processed/full_dataset_cache.pt"),
-        Path("/content/drive/MyDrive/Sepsis-Hybrid-Transformer/data/processed/full_dataset_cache.pt"),
-        Path(__file__).parent.parent.parent / "processed" / "full_dataset_cache.pt",
-    ]
-    cache_path = None
-    for p in possible_cache_paths:
-        if p.exists():
-            cache_path = p
-            break
-            
-    if cache_path is None:
-        raise FileNotFoundError("Cached dataset not found in data/processed/ or Google Drive. Please mount Drive or copy full_dataset_cache.pt.")
-
+    cache_path = Path(__file__).parent.parent / "data" / "processed" / "full_dataset_cache.pt"
+    if not cache_path.exists():
+        # Fallback for Colab outer directory structure
+        outer_cache_path = Path(__file__).parent.parent.parent / "processed" / "full_dataset_cache.pt"
+        if outer_cache_path.exists():
+            cache_path = outer_cache_path
+        else:
+            raise FileNotFoundError(f"Cached dataset not found at {cache_path} or {outer_cache_path}. Run preprocessing first.")
             
     print(f"[Trainer] Loading cached dataset tensors in memory from {cache_path}...")
     cache_dict = torch.load(cache_path)
@@ -326,31 +301,22 @@ def main():
 
     # 2. Build Model & Optimizer
     model = build_model(config, device)
-    # BUG FIX: For M3 (tact with ablation_mode=none or mask_delta), use simple
-    # BCEWithLogitsLoss. The compound focal+utility criterion is only needed for
-    # the TACT-UGO variant (focal_only / tact_ugo ablation modes).
-    # Using a dict criterion with UtilityAwareLoss on M3 was introducing a Python
-    # loop over every batch row which hurt both speed and correctness.
-    ablation_mode = config.get("ablation_mode", "none")
-    if "tact_ugo" in model_name.lower() or ablation_mode in ["focal_only", "tact_ugo"]:
-        criterion = {
-            "focal": FocalLoss(pos_weight=pos_weight.item(), gamma=2.0, reduction="mean"),
-            "utility": UtilityAwareLoss(base_pos_weight=pos_weight.item(), reduction="mean")
-        }
+    if config.get("model") == "tact":
+        ablation_mode = config.get("ablation_mode", "none")
+        if ablation_mode == "focal_only":
+            criterion = FocalLoss(pos_weight=pos_weight.item(), gamma=2.0, reduction="mean")
+        else:
+            criterion = {
+                "focal": FocalLoss(pos_weight=pos_weight.item(), gamma=2.0, reduction="mean"),
+                "utility": UtilityAwareLoss(base_pos_weight=pos_weight.item(), reduction="mean")
+            }
     else:
-        # Standard weighted BCE — correct for M2, M3, ablations, and hybrid
         criterion = nn.BCEWithLogitsLoss(pos_weight=pos_weight)
-    optimizer = AdamW(
-        model.parameters(),
-        lr=config.get("learning_rate", 1e-4),
-        weight_decay=config.get("weight_decay", 1e-4)
-    )
+    optimizer = AdamW(model.parameters(), lr=config.get("learning_rate", 1e-4), weight_decay=1e-4)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', factor=0.5, patience=3)
     scaler = GradScaler()
-
-    # input_key: 'values' for M2 / plain_transformer, 'triplet' for M3, M4, TACT
-    input_key = "values" if ("m2" in model_name.lower() or "plain" in model_name.lower()) else "triplet"
-
+    
+    input_key = "values" if model_name == "plain_transformer" else "triplet"
     
     start_epoch = 1
     best_val_utility = -np.inf
@@ -428,15 +394,13 @@ def main():
         if val_utility > best_val_utility:
             best_val_utility = val_utility
             epochs_no_improve = 0
-
+            
             # Clean old best checkpoints
             for f in best_ckpt_path.glob("best_*.pt"):
                 f.unlink()
-
+                
             ckpt_name = f"best_{model_name}_auroc{val_auroc:.3f}_epoch{epoch:02d}.pt"
-            # BUG FIX: Save both the full checkpoint dict AND a flat state_dict
-            # so evaluate_robustness.py can load it with model.load_state_dict() directly.
-            full_ckpt = {
+            torch.save({
                 "epoch": epoch,
                 "model": model.state_dict(),
                 "optimizer": optimizer.state_dict(),
@@ -444,10 +408,7 @@ def main():
                 "scaler": scaler.state_dict(),
                 "best_metric": best_val_utility,
                 "config": config
-            }
-            torch.save(full_ckpt, best_ckpt_path / ckpt_name)
-            # Also save a clean state_dict for simple loading in downstream scripts
-            torch.save(model.state_dict(), exp_dir / "best_model.pt")
+            }, best_ckpt_path / ckpt_name)
             print(f"  -> Best model saved: {ckpt_name}")
         else:
             epochs_no_improve += 1
@@ -463,26 +424,20 @@ def main():
     
     # 4. Final Evaluation on Test Set
     print("\n[Trainer] Evaluating Best Model on Test Set...")
-    print(f"  [Ablation Mode] Active ablation: {ablation_mode}")
     # Load Best Model
     best_ckpts = list(best_ckpt_path.glob("best_*.pt"))
     if best_ckpts:
         best_ckpt = max(best_ckpts, key=os.path.getctime)
-        print(f"  [Checkpoint] Loading best checkpoint: {best_ckpt}")
         ckpt = torch.load(best_ckpt, map_location=device)
         model.load_state_dict(ckpt["model"])
-    else:
-        print("  [Checkpoint] WARNING: No checkpoint found! Using current model weights.")
-
+        
     test_loss, test_labels, test_probas = evaluate_epoch(model, test_loader, criterion, device, input_key)
-
+    
     # Re-evaluate optimal threshold on val, apply to test
     _, val_labels, val_probas = evaluate_epoch(model, val_loader, criterion, device, input_key)
-    best_thresh, val_best_u = find_optimal_threshold(val_labels, val_probas, n_thresholds=20)
-    print(f"  [Threshold] Optimal threshold on Validation set: {best_thresh:.4f} (Val Utility: {val_best_u:.4f})")
-
+    best_thresh, _ = find_optimal_threshold(val_labels, val_probas, n_thresholds=20)
+    
     test_preds = [(p >= best_thresh).astype(int) for p in test_probas]
-
     test_utility = compute_utility_score(test_labels, test_preds)
     
     report = full_evaluation_report(
