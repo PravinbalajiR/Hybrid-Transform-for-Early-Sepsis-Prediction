@@ -411,7 +411,7 @@ def main():
         {"Model": "M3 (Control)", "AUROC": m3_metrics["auroc"], "AUPRC": m3_metrics["auprc"], "F1": m3_metrics["f1"], "Precision": m3_metrics["precision"], "Recall": m3_metrics["recall"], "ECE": m3_metrics["ece"], "Brier": m3_metrics["brier"], "Mean Lead Time": m3_metrics["mean_lead_h"], "Median Lead Time": m3_metrics["median_lead_h"], ">=1h": m3_metrics["pct_1h"], ">=6h": m3_metrics["pct_6h"], ">=12h": m3_metrics["pct_12h"], "Late %": m3_metrics["pct_late"], "FPR/hour": m3_metrics["fpr"], "Utility": m3_metrics["utility"], "Parameters": 163841, "Inference Time": "18.4 s"},
         {"Model": "M5-FINAL", "AUROC": m5_final_metrics["auroc"], "AUPRC": m5_final_metrics["auprc"], "F1": m5_final_metrics["f1"], "Precision": m5_final_metrics["precision"], "Recall": m5_final_metrics["recall"], "ECE": m5_final_metrics["ece"], "Brier": m5_final_metrics["brier"], "Mean Lead Time": m5_final_metrics["mean_lead_h"], "Median Lead Time": m5_final_metrics["median_lead_h"], ">=1h": m5_final_metrics["pct_1h"], ">=6h": m5_final_metrics["pct_6h"], ">=12h": m5_final_metrics["pct_12h"], "Late %": m5_final_metrics["pct_late"], "FPR/hour": m5_final_metrics["fpr"], "Utility": m5_final_metrics["utility"], "Parameters": sum(p.numel() for p in M5Model(variant="M5-FINAL").parameters()), "Inference Time": f"{m5_final_metrics['inference_time_s']:.1f} s"},
     ])
-    comp_m3_m5.to_csv(RESULTS_DIR / "M3_vs_M5_FINAL.csv", index=False)
+    comp_m3_m5.to_csv(RESULTS_M5_DIR / "M3_vs_M5_FINAL.csv", index=False)
     
     # 7. Generate High-Res Figures 1-12 in plots/m3_final and plots/m5/
     y_m3_true = np.concatenate(m3_test_lbls)
