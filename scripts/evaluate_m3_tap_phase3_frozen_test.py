@@ -11,6 +11,7 @@ M3-TAP Phase 3E & 3F: Single-Pass Frozen Held-Out Test Evaluation.
 import sys
 import json
 import torch
+import re
 import numpy as np
 import pandas as pd
 from pathlib import Path
@@ -21,7 +22,7 @@ sys.path.insert(0, str(BASE_DIR))
 from evaluation.utility_score import compute_utility_score
 from evaluation.metrics import compute_timing_analysis
 from scripts.temporal_alert_policy import CooldownPolicy, NaiveThresholdPolicy
-from scripts.run_m3_tap_phase3_policy_search import PersistenceCooldownPolicy, HysteresisCooldownPolicy, RiskAdaptiveCooldownPolicy
+from scripts.run_m3_tap_phase3_policy_search import PersistenceCooldownPolicy, HysteresisCooldownPolicy, RiskAdaptiveCooldownPolicy, MedianSmoothingPolicy, AlertCapPolicy
 from scripts.recompute_exact_decompositions import official_patient_utility_decomposition
 
 RESULTS_DIR = BASE_DIR / "results"
@@ -31,37 +32,36 @@ def print_flush(msg: str):
     print(msg, flush=True)
 
 def reconstruct_policy_object(name: str):
-    if "Cooldown(th=" in name:
-        parts = name.replace("Cooldown(th=", "").replace(")", "").split(", C=")
-        th_val = float(parts[0])
-        c_val = int(parts[1].replace("h", ""))
-        return CooldownPolicy(th_val, c_val)
-    elif "PersistCooldown(th=" in name:
-        parts = name.replace("PersistCooldown(th=", "").replace(")", "").split(", K=")
-        th_val = float(parts[0])
-        subparts = parts[1].split(", C=")
-        k_val = int(subparts[0])
-        c_val = int(subparts[1].replace("h", ""))
-        return PersistenceCooldownPolicy(th_val, k_val, c_val)
-    elif "HysteresisCooldown(high=" in name:
-        parts = name.replace("HysteresisCooldown(high=", "").replace(")", "").split(", low=")
-        high_val = float(parts[0])
-        subparts = parts[1].split(", C=")
-        low_val = float(subparts[0])
-        c_val = int(subparts[1].replace("h", ""))
-        return HysteresisCooldownPolicy(high_val, low_val, c_val)
-    elif "RiskAdaptive(th=" in name:
-        parts = name.replace("RiskAdaptive(th=", "").replace(")", "").split(", C_low=")
-        th_val = float(parts[0])
-        subparts = parts[1].split(", C_high=")
-        c_low = int(subparts[0].replace("h", ""))
-        c_high = int(subparts[1].replace("h", ""))
-        return RiskAdaptiveCooldownPolicy(th_val, c_low, c_high, 0.40)
-    elif "Naive(th=" in name:
-        parts = name.replace("Naive(th=", "").replace(")", "")
-        return NaiveThresholdPolicy(float(parts))
-    else:
-        return CooldownPolicy(0.20, 24)
+    if "Cap" in name:
+        m = re.search(r"Cap\d+/\d+h\((.*)\)", name)
+        inner_str = m.group(1) if m else name
+        return AlertCapPolicy(reconstruct_policy_object(inner_str), 1)
+
+    m_cool = re.search(r"Cooldown\(th=([\d\.]+),\s*C=(\d+)h\)", name)
+    if m_cool:
+        return CooldownPolicy(float(m_cool.group(1)), int(m_cool.group(2)))
+
+    m_persist = re.search(r"PersistCooldown\(th=([\d\.]+),\s*K=(\d+),\s*C=(\d+)h\)", name)
+    if m_persist:
+        return PersistenceCooldownPolicy(float(m_persist.group(1)), int(m_persist.group(2)), int(m_persist.group(3)))
+
+    m_hyst = re.search(r"HysteresisCooldown\(high=([\d\.]+),\s*low=([\d\.]+),\s*C=(\d+)h\)", name)
+    if m_hyst:
+        return HysteresisCooldownPolicy(float(m_hyst.group(1)), float(m_hyst.group(2)), int(m_hyst.group(3)))
+
+    m_risk = re.search(r"RiskAdaptive\(th=([\d\.]+),\s*C_low=(\d+)h,\s*C_high=(\d+)h\)", name)
+    if m_risk:
+        return RiskAdaptiveCooldownPolicy(float(m_risk.group(1)), int(m_risk.group(2)), int(m_risk.group(3)), 0.40)
+
+    m_med = re.search(r"MedianSmooth\(th=([\d\.]+),\s*W=(\d+)h,\s*C=(\d+)h\)", name)
+    if m_med:
+        return MedianSmoothingPolicy(float(m_med.group(1)), int(m_med.group(2)), int(m_med.group(3)))
+
+    m_naive = re.search(r"Naive\(th=([\d\.]+)\)", name)
+    if m_naive:
+        return NaiveThresholdPolicy(float(m_naive.group(1)))
+
+    return CooldownPolicy(0.20, 24)
 
 def evaluate_on_test_cohort(policy, test_labels, test_probs):
     test_preds = policy.generate_alerts_cohort(test_probs)
@@ -201,7 +201,6 @@ def main():
 
     df_decomp.to_csv(RESULTS_DIR / "m3_tap_phase3_utility_decomposition.csv", index=False)
 
-    # 2. Progression Comparison Across Raw M3, Phase 1, Phase 2, Phase 3
     progression_table = [
         {"Phase": "Raw M3 Baseline", "Policy": "Naive(th=0.44)", "Test_Utility": -1.1440, "Patient_Detection": "70.4% (750/1066)", "FPR_h": "2.10%", "Mean_Lead_h": 7.7},
         {"Phase": "M3-TAP Phase 1", "Policy": "Cooldown(th=0.44, C=24h)", "Test_Utility": -0.4478, "Patient_Detection": "70.4% (750/1066)", "FPR_h": "0.25%", "Mean_Lead_h": 7.7},
@@ -210,7 +209,6 @@ def main():
     ]
     df_prog = pd.DataFrame(progression_table)
 
-    # 3. Generate Markdown Test Report
     report_md = f"""# 🔬 M3-TAP PHASE 3 HELD-OUT TEST EVALUATION & RESEARCH REPORT
 
 **Status:** COMPLETE - ZERO TEST LEAKAGE VERIFIED  

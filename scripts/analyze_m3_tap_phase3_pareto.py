@@ -4,7 +4,7 @@ analyze_m3_tap_phase3_pareto.py
 M3-TAP Phase 3B, 3C, 3D: Pareto Frontier Construction & Validation Policy Freeze.
 1. Constructs Pareto non-dominated frontiers across Utility, FPR/h, Detection, Lead Time.
 2. Evaluates 10 Prespecified Constraint Categories safely with fallbacks.
-3. Performs Patient-Level Bootstrap Robustness Analysis (B=1,000).
+3. Performs Patient-Level Bootstrap Robustness Analysis (B=1,000) using regex parser.
 4. Freezes Top 5 Validation Policies into results/m3_tap_phase3_selected_policies.json.
 5. Emits 'VALIDATION POLICY FREEZE COMPLETE' declaration.
 """
@@ -14,6 +14,7 @@ import json
 import torch
 import hashlib
 import datetime
+import re
 import numpy as np
 import pandas as pd
 from pathlib import Path
@@ -40,38 +41,32 @@ def compute_sha256(filepath: Path) -> str:
     return h.hexdigest()
 
 def reconstruct_policy_object(name: str):
-    if "Cooldown(th=" in name:
-        parts = name.replace("Cooldown(th=", "").replace(")", "").split(", C=")
-        th_val = float(parts[0])
-        c_val = int(parts[1].replace("h", ""))
-        return CooldownPolicy(th_val, c_val)
-    elif "PersistCooldown(th=" in name:
-        parts = name.replace("PersistCooldown(th=", "").replace(")", "").split(", K=")
-        th_val = float(parts[0])
-        subparts = parts[1].split(", C=")
-        k_val = int(subparts[0])
-        c_val = int(subparts[1].replace("h", ""))
-        return PersistenceCooldownPolicy(th_val, k_val, c_val)
-    elif "HysteresisCooldown(high=" in name:
-        parts = name.replace("HysteresisCooldown(high=", "").replace(")", "").split(", low=")
-        high_val = float(parts[0])
-        subparts = parts[1].split(", C=")
-        low_val = float(subparts[0])
-        c_val = int(subparts[1].replace("h", ""))
-        return HysteresisCooldownPolicy(high_val, low_val, c_val)
-    elif "RiskAdaptive(th=" in name:
-        parts = name.replace("RiskAdaptive(th=", "").replace(")", "").split(", C_low=")
-        th_val = float(parts[0])
-        subparts = parts[1].split(", C_high=")
-        c_low = int(subparts[0].replace("h", ""))
-        c_high = int(subparts[1].replace("h", ""))
-        return RiskAdaptiveCooldownPolicy(th_val, c_low, c_high, 0.40)
-    elif "Cap" in name:
-        sub_name = name.split("Cap1/24h(")[-1].replace(")", "")
-        base_pol = reconstruct_policy_object(sub_name)
-        return AlertCapPolicy(base_pol, 1)
-    else:
-        return CooldownPolicy(0.20, 24)
+    if "Cap" in name:
+        m = re.search(r"Cap\d+/\d+h\((.*)\)", name)
+        inner_str = m.group(1) if m else name
+        return AlertCapPolicy(reconstruct_policy_object(inner_str), 1)
+
+    m_cool = re.search(r"Cooldown\(th=([\d\.]+),\s*C=(\d+)h\)", name)
+    if m_cool:
+        return CooldownPolicy(float(m_cool.group(1)), int(m_cool.group(2)))
+
+    m_persist = re.search(r"PersistCooldown\(th=([\d\.]+),\s*K=(\d+),\s*C=(\d+)h\)", name)
+    if m_persist:
+        return PersistenceCooldownPolicy(float(m_persist.group(1)), int(m_persist.group(2)), int(m_persist.group(3)))
+
+    m_hyst = re.search(r"HysteresisCooldown\(high=([\d\.]+),\s*low=([\d\.]+),\s*C=(\d+)h\)", name)
+    if m_hyst:
+        return HysteresisCooldownPolicy(float(m_hyst.group(1)), float(m_hyst.group(2)), int(m_hyst.group(3)))
+
+    m_risk = re.search(r"RiskAdaptive\(th=([\d\.]+),\s*C_low=(\d+)h,\s*C_high=(\d+)h\)", name)
+    if m_risk:
+        return RiskAdaptiveCooldownPolicy(float(m_risk.group(1)), int(m_risk.group(2)), int(m_risk.group(3)), 0.40)
+
+    m_med = re.search(r"MedianSmooth\(th=([\d\.]+),\s*W=(\d+)h,\s*C=(\d+)h\)", name)
+    if m_med:
+        return MedianSmoothingPolicy(float(m_med.group(1)), int(m_med.group(2)), int(m_med.group(3)))
+
+    return CooldownPolicy(0.20, 24)
 
 def safe_select_best(df, mask=None, sort_col="utility"):
     sub = df[mask] if mask is not None else df
@@ -150,7 +145,6 @@ def main():
     c10 = safe_select_best(df_sweep, (df_sweep["patient_detection_rate"] >= 0.9000) & (df_sweep["fpr_h"] <= 0.0050))
     constraint_results["C10_Combined_Constrained"] = c10.to_dict()
 
-    # Select Top 5 Scientifically Justified Policies for Frozen Test Evaluation
     top_selected_policies = [
         ("Policy 1: Validation Utility Optimum", c1.to_dict()),
         ("Policy 2: Detection >= 90% Optimum", c6.to_dict()),
