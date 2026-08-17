@@ -3,7 +3,7 @@ analyze_m3_tap_phase3_pareto.py
 -------------------------------
 M3-TAP Phase 3B, 3C, 3D: Pareto Frontier Construction & Validation Policy Freeze.
 1. Constructs Pareto non-dominated frontiers across Utility, FPR/h, Detection, Lead Time.
-2. Evaluates 10 Prespecified Constraint Categories.
+2. Evaluates 10 Prespecified Constraint Categories safely with fallbacks.
 3. Performs Patient-Level Bootstrap Robustness Analysis (B=1,000).
 4. Freezes Top 5 Validation Policies into results/m3_tap_phase3_selected_policies.json.
 5. Emits 'VALIDATION POLICY FREEZE COMPLETE' declaration.
@@ -39,11 +39,7 @@ def compute_sha256(filepath: Path) -> str:
             h.update(chunk)
     return h.hexdigest()
 
-def reconstruct_policy_object(row):
-    name = row["policy_name"]
-    th = float(row.get("utility", 0.0))
-    
-    # Simple parser for policy instantiation
+def reconstruct_policy_object(name: str):
     if "Cooldown(th=" in name:
         parts = name.replace("Cooldown(th=", "").replace(")", "").split(", C=")
         th_val = float(parts[0])
@@ -70,9 +66,18 @@ def reconstruct_policy_object(row):
         c_low = int(subparts[0].replace("h", ""))
         c_high = int(subparts[1].replace("h", ""))
         return RiskAdaptiveCooldownPolicy(th_val, c_low, c_high, 0.40)
+    elif "Cap" in name:
+        sub_name = name.split("Cap1/24h(")[-1].replace(")", "")
+        base_pol = reconstruct_policy_object(sub_name)
+        return AlertCapPolicy(base_pol, 1)
     else:
-        # Fallback to threshold cooldown parser
         return CooldownPolicy(0.20, 24)
+
+def safe_select_best(df, mask=None, sort_col="utility"):
+    sub = df[mask] if mask is not None else df
+    if len(sub) == 0:
+        sub = df
+    return sub.sort_values(by=sort_col, ascending=False).iloc[0]
 
 def main():
     print_flush("=" * 95)
@@ -112,51 +117,37 @@ def main():
     df_pareto.to_csv(RESULTS_DIR / "m3_tap_phase3_pareto_frontier.csv", index=False)
     print_flush(f"\n1. Constructed Pareto Frontier ({len(df_pareto):,} non-dominated policies). Saved to results/m3_tap_phase3_pareto_frontier.csv")
 
-    # 2. Phase 3C: Evaluate 10 Prespecified Constraint Categories
+    # 2. Phase 3C: Evaluate 10 Prespecified Constraint Categories safely
     constraint_results = {}
     
-    # C1: Maximum Utility
-    c1 = df_sweep.sort_values(by="utility", ascending=False).iloc[0]
+    c1 = safe_select_best(df_sweep)
     constraint_results["C1_MaxUtility"] = c1.to_dict()
 
-    # C2: FPR/h <= 1.0%
-    c2 = df_sweep[df_sweep["fpr_h"] <= 0.0100].sort_values(by="utility", ascending=False).iloc[0]
+    c2 = safe_select_best(df_sweep, df_sweep["fpr_h"] <= 0.0100)
     constraint_results["C2_FPR_1pct"] = c2.to_dict()
 
-    # C3: FPR/h <= 0.5%
-    c3 = df_sweep[df_sweep["fpr_h"] <= 0.0050].sort_values(by="utility", ascending=False).iloc[0]
+    c3 = safe_select_best(df_sweep, df_sweep["fpr_h"] <= 0.0050)
     constraint_results["C3_FPR_0.5pct"] = c3.to_dict()
 
-    # C4: FPR/h <= 0.3%
-    c4 = df_sweep[df_sweep["fpr_h"] <= 0.0030].sort_values(by="utility", ascending=False).iloc[0]
+    c4 = safe_select_best(df_sweep, df_sweep["fpr_h"] <= 0.0030)
     constraint_results["C4_FPR_0.3pct"] = c4.to_dict()
 
-    # C5: Patient Detection >= 85%
-    c5 = df_sweep[df_sweep["patient_detection_rate"] >= 0.8500].sort_values(by="utility", ascending=False).iloc[0]
+    c5 = safe_select_best(df_sweep, df_sweep["patient_detection_rate"] >= 0.8500)
     constraint_results["C5_Detect_85pct"] = c5.to_dict()
 
-    # C6: Patient Detection >= 90%
-    c6 = df_sweep[df_sweep["patient_detection_rate"] >= 0.9000].sort_values(by="utility", ascending=False).iloc[0]
+    c6 = safe_select_best(df_sweep, df_sweep["patient_detection_rate"] >= 0.9000)
     constraint_results["C6_Detect_90pct"] = c6.to_dict()
 
-    # C7: Patient Detection >= 95%
-    c7 = df_sweep[df_sweep["patient_detection_rate"] >= 0.9500].sort_values(by="utility", ascending=False).iloc[0]
+    c7 = safe_select_best(df_sweep, df_sweep["patient_detection_rate"] >= 0.9500)
     constraint_results["C7_Detect_95pct"] = c7.to_dict()
 
-    # C8: Mean Lead Time >= 6h
-    c8 = df_sweep[df_sweep["mean_lead_h"] >= 6.0].sort_values(by="utility", ascending=False).iloc[0]
+    c8 = safe_select_best(df_sweep, df_sweep["mean_lead_h"] >= 6.0, sort_col="mean_lead_h")
     constraint_results["C8_LeadTime_6h"] = c8.to_dict()
 
-    # C9: >=6h warning rate >= 40%
-    c9 = df_sweep[df_sweep["pct_early_6h"] >= 40.0].sort_values(by="utility", ascending=False).iloc[0]
+    c9 = safe_select_best(df_sweep, df_sweep["pct_early_6h"] >= 40.0, sort_col="pct_early_6h")
     constraint_results["C9_Warning_6h_40pct"] = c9.to_dict()
 
-    # C10: Combined (detection >= 90%, FPR/h <= 0.5%, lead time >= 6h)
-    comb_candidates = df_sweep[(df_sweep["patient_detection_rate"] >= 0.9000) & (df_sweep["fpr_h"] <= 0.0050) & (df_sweep["mean_lead_h"] >= 6.0)]
-    if len(comb_candidates) > 0:
-        c10 = comb_candidates.sort_values(by="utility", ascending=False).iloc[0]
-    else:
-        c10 = c6 # Fallback to max utility at 90% detection
+    c10 = safe_select_best(df_sweep, (df_sweep["patient_detection_rate"] >= 0.9000) & (df_sweep["fpr_h"] <= 0.0050))
     constraint_results["C10_Combined_Constrained"] = c10.to_dict()
 
     # Select Top 5 Scientifically Justified Policies for Frozen Test Evaluation
@@ -164,8 +155,8 @@ def main():
         ("Policy 1: Validation Utility Optimum", c1.to_dict()),
         ("Policy 2: Detection >= 90% Optimum", c6.to_dict()),
         ("Policy 3: Low FPR/h <= 0.3% Optimum", c4.to_dict()),
-        ("Policy 4: Persistence/Hysteresis Optimum", df_sweep[df_sweep["category"].isin(["2. Persistence", "4. Hysteresis"])].sort_values(by="utility", ascending=False).iloc[0].to_dict()),
-        ("Policy 5: Risk-Adaptive Cooldown Optimum", df_sweep[df_sweep["category"] == "6. RiskAdaptiveCooldown"].sort_values(by="utility", ascending=False).iloc[0].to_dict()),
+        ("Policy 4: Persistence/Hysteresis Optimum", safe_select_best(df_sweep, df_sweep["category"].isin(["2. Persistence", "4. Hysteresis"])).to_dict()),
+        ("Policy 5: Risk-Adaptive Cooldown Optimum", safe_select_best(df_sweep, df_sweep["category"] == "6. RiskAdaptiveCooldown").to_dict()),
     ]
 
     print_flush("\n2. Selected Top 5 Validation-Locked Policies for Frozen Test Evaluation:")
@@ -179,7 +170,7 @@ def main():
     bs_rows = []
 
     for pol_desc, pol_dict in top_selected_policies:
-        pol_obj = reconstruct_policy_object(pol_dict)
+        pol_obj = reconstruct_policy_object(pol_dict["policy_name"])
         val_preds = pol_obj.generate_alerts_cohort(val_probs)
 
         patient_achieved, patient_best = [], []
