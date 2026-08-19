@@ -270,45 +270,28 @@ def main():
 
     # Generate Feasibility Report Markdown
     tax_str = df_tax.to_string(index=False)
-    report_md = """# 🔬 M3 PHASE 6: UTILITY FEASIBILITY & DECISION-BOUNDARY ANALYSIS REPORT
-
-**Status:** COMPLETE — DESCRIPTIVE DIAGNOSTIC VERIFIED  
-**Held-Out Test Cohort:** N = 20,000 patients (753,927 hourly records)  
-
----
-
-## 1. Mathematical Utility Deficit & Tradeoff Analysis
-
-- **Current Held-Out Test Utility:** `-0.257312`
-- **Utility Gap to Zero:** `+0.257312` points
-- **Additional TP Septic Patients Required (Fixed FP):** `+{req_tp_patients}` patients (out of {n_fn} currently missed)
-- **Removable False-Alarm Hours Required (Fixed TP):** `-{rem_fp_hours}` hours (out of {fp_hours} total false-alarm hours)
-
----
-
-## 2. 8-Category Error Taxonomy
-
-```text
-{tax_str}
-```
-
----
-
-## 3. Answer to Scientific Critical Question
-
-> **Question:** Given the existing frozen M3 probabilities, is positive PhysioNet utility primarily limited by:  
-> **Answer:** **E. Excessive non-septic score overlap & D. Insufficient early-warning probability magnitude on late/atypical onset sepsis cases.**
-
-**Scientific Rationale:**  
-Decision-policy optimization applied strictly to frozen M3 predictions has achieved a **+0.8867 boost** over raw baseline (cutting the penalty gap by 77.5%). However, because 156 septic patients remain below decision thresholds (incurring a $-312.00$ pts penalty) and non-sepsis false alarm hours incur $-230.70$ pts penalty, **decision policies alone cannot cross $U > 0.00$ without representation-level retraining**.
-
----
-
-## 4. Recommended Next Research Intervention
-
-**Phase 7: Utility-Aware Loss Function Retraining (M3-U)**  
-Train an experimental M3 variant using a **Differentiable PhysioNet Utility Surrogate Loss** ($\mathcal{L}_{\text{total}} = \mathcal{L}_{\text{BCE}} + \lambda \mathcal{L}_{\text{Utility\_Surrogate}}$) to penalize missed sepsis cases $20\\times$ more heavily than false alarms during gradient backpropagation.
-""".format(req_tp_patients=req_tp_patients, n_fn=n_fn, rem_fp_hours=rem_fp_hours, fp_hours=fp_hours, tax_str=tax_str)
+    report_md = "# 🔬 M3 PHASE 6: UTILITY FEASIBILITY & DECISION-BOUNDARY ANALYSIS REPORT\n\n" \
+                "**Status:** COMPLETE — DESCRIPTIVE DIAGNOSTIC VERIFIED  \n" \
+                "**Held-Out Test Cohort:** N = 20,000 patients (753,927 hourly records)  \n\n" \
+                "---\n\n" \
+                "## 1. Mathematical Utility Deficit & Tradeoff Analysis\n\n" \
+                "- **Current Held-Out Test Utility:** `-0.257312`  \n" \
+                "- **Utility Gap to Zero:** `+0.257312` points  \n" \
+                "- **Additional TP Septic Patients Required (Fixed FP):** `+" + str(req_tp_patients) + "` patients (out of " + str(n_fn) + " currently missed)  \n" \
+                "- **Removable False-Alarm Hours Required (Fixed TP):** `-" + str(rem_fp_hours) + "` hours (out of " + str(fp_hours) + " total false-alarm hours)  \n\n" \
+                "---\n\n" \
+                "## 2. 8-Category Error Taxonomy\n\n" \
+                "```text\n" + tax_str + "\n```\n\n" \
+                "---\n\n" \
+                "## 3. Answer to Scientific Critical Question\n\n" \
+                "> **Question:** Given the existing frozen M3 probabilities, is positive PhysioNet utility primarily limited by:  \n" \
+                "> **Answer:** **E. Excessive non-septic score overlap & D. Insufficient early-warning probability magnitude on late/atypical onset sepsis cases.**\n\n" \
+                "**Scientific Rationale:**  \n" \
+                "Decision-policy optimization applied strictly to frozen M3 predictions has achieved a **+0.8867 boost** over raw baseline (cutting the penalty gap by 77.5%). However, because 156 septic patients remain below decision thresholds (incurring a $-312.00$ pts penalty) and non-sepsis false alarm hours incur $-230.70$ pts penalty, **decision policies alone cannot cross $U > 0.00$ without representation-level retraining**.\n\n" \
+                "---\n\n" \
+                "## 4. Recommended Next Research Intervention\n\n" \
+                "**Phase 7: Utility-Aware Loss Function Retraining (M3-U)**  \n" \
+                "Train an experimental M3 variant using a **Differentiable PhysioNet Utility Surrogate Loss** to penalize missed sepsis cases heavily during gradient backpropagation.\n"
 
     (RESULTS_DIR / "m3_phase6_feasibility_report.md").write_text(report_md, encoding="utf-8")
     (REPORTS_DIR / "m3_phase6_feasibility_report.md").write_text(report_md, encoding="utf-8")
