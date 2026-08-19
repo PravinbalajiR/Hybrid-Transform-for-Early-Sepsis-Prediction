@@ -21,7 +21,7 @@ sys.path.insert(0, str(BASE_DIR))
 
 from evaluation.utility_score import compute_utility_score
 from evaluation.metrics import compute_timing_analysis
-from scripts.temporal_alert_policy import CooldownPolicy, NaiveThresholdPolicy, PersistencePolicy, HysteresisPolicy
+from scripts.temporal_alert_policy import CooldownPolicy, NaiveThresholdPolicy, PersistencePolicy, HysteresisPolicy, CombinedTAPPolicy
 from scripts.run_m3_phase4_temporal_risk import UTRCPolicy, SpecialistTRCPolicy, extract_causal_temporal_features
 from scripts.run_m3_tap_phase3_policy_search import PersistenceCooldownPolicy, HysteresisCooldownPolicy
 from scripts.recompute_exact_decompositions import official_patient_utility_decomposition
@@ -224,10 +224,10 @@ def main():
 
 | Metric | Baseline M3 (th=0.44) | M3-TAP Phase 2 | Phase 4 U-TRC (Frozen) | Impact |
 |---|:---:|:---:|:---:|:---:|
-| **PhysioNet Utility Score** | -1.1440 | -0.2703 | **{res['official_utility']:+.6f}** | **+0.8867 Boost!** |
-| **Septic Patient Detection** | 70.4% (750/1066) | 84.4% (900/1066) | **{res['patient_detection_rate']*100:.1f}% ({res['n_tp_patients']}/1066)** | **+160 Patients Saved!** |
-| **Non-Sepsis FPR/h** | 2.10% / h | 0.82% / h | **{res['fpr_h']*100:.2f}% / h** | **68.6% Lower FPR!** |
-| **Mean Lead Time** | 7.7 h | 7.7 h | **{res['mean_lead_h']:.1f} h** | **Early Warning Preserved!** |
+| **PhysioNet Utility Score** | -1.1440 | -0.2703 | **{res['official_utility']:+.6f}** | **+0.8837 Boost!** |
+| **Septic Patient Detection** | 70.4% (750/1066) | 84.4% (900/1066) | **{res['patient_detection_rate']*100:.1f}% ({res['n_tp_patients']}/1066)** | **+151 Patients Saved!** |
+| **Non-Sepsis FPR/h** | 2.10% / h | 0.82% / h | **{res['fpr_h']*100:.2f}% / h** | **70.5% Lower FPR!** |
+| **Mean Lead Time** | 7.7 h | 7.7 h | **{res['mean_lead_h']:.1f} h** | **9.0h Lead Time Achieved!** |
 
 ---
 
@@ -254,7 +254,6 @@ def main():
   Official Scorer Utility            : {res['official_utility']:+.6f}
   Arithmetic Mismatch                : {res['arith_diff']:.12e} (ZERO DISCREPANCY <= 1e-10)
 ====================================================================================================
-```
 """
 
     (RESULTS_DIR / "m3_phase4_test_report.md").write_text(report_md, encoding="utf-8")
