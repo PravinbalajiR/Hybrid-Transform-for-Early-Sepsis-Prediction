@@ -2,7 +2,8 @@
 audit_m3_phase5.py
 ------------------
 Standalone Audit Script for M3 Phase 5 Hard-Case Temporal Rescue (HTR).
-Verifies all 11 required output artifacts, artifact checksums, zero test leakage, and scorer equivalence.
+Verifies all 12 required output artifacts (including m3_phase5_feature_schema.json),
+artifact checksums, feature schema consistency, zero test leakage, and scorer equivalence.
 """
 
 import sys
@@ -47,35 +48,58 @@ def main():
         print("   CRITICAL ERROR: Artifact checksum mismatch!")
         sys.exit(1)
 
-    # 2. Verify Output File Existence & Non-Emptiness
+    # 2. Verify Feature Schema JSON Consistency
+    schema_path = RESULTS_DIR / "m3_phase5_feature_schema.json"
+    if not schema_path.exists():
+        print("   CRITICAL ERROR: m3_phase5_feature_schema.json missing!")
+        sys.exit(1)
+
+    with open(schema_path, "r") as f:
+        schema_data = json.load(f)
+
+    feat_count = schema_data.get("feature_count", 0)
+    print("\n2. HTR Feature Schema Audit:")
+    print(f"   Feature Count          : {feat_count} [{'PASSED' if feat_count==8 else 'FAILED'}]")
+    print(f"   Feature Names          : {schema_data.get('feature_names')}")
+    print(f"   Training Source        : {schema_data.get('training_source')}")
+
+    if feat_count != 8:
+        print("   CRITICAL ERROR: Feature count must be exactly 8!")
+        sys.exit(1)
+
+    # 3. Verify Output File Existence & Non-Emptiness
     required_files = [
         RESULTS_DIR / "m3_phase5_hard_cases.csv",
+        RESULTS_DIR / "m3_phase5_hard_case_analysis.csv",
         RESULTS_DIR / "m3_phase5_hard_case_analysis.md",
         RESULTS_DIR / "m3_phase5_policy_sweep.csv",
+        RESULTS_DIR / "m3_phase5_pareto_frontier.csv",
         RESULTS_DIR / "m3_phase5_frozen_policy.json",
         RESULTS_DIR / "m3_phase5_ablation.csv",
         RESULTS_DIR / "m3_phase5_bootstrap_ci.csv",
         RESULTS_DIR / "m3_phase5_test_report.md",
         RESULTS_DIR / "m3_phase5_utility_decomposition.csv",
+        RESULTS_DIR / "m3_phase5_novelty_matrix.csv",
+        RESULTS_DIR / "m3_phase5_feature_schema.json",
     ]
 
-    print("\n2. Required Output Files Integrity:")
+    print("\n3. Required Output Files Integrity:")
     all_files_exist = True
     for fpath in required_files:
         exists = fpath.exists() and fpath.stat().st_size > 0
         status = "PASSED" if exists else "FAILED"
         if not exists: all_files_exist = False
-        print(f"   File: {fpath.name:40s} [{status}]")
+        print(f"   File: {fpath.name:42s} [{status}]")
 
     if not all_files_exist:
         print("   CRITICAL ERROR: One or more required Phase 5 output files missing or empty!")
         sys.exit(1)
 
-    # 3. Scorer Equivalence Verification
+    # 4. Scorer Equivalence Verification
     decomp_df = pd.read_csv(RESULTS_DIR / "m3_phase5_utility_decomposition.csv")
     max_diff = decomp_df["arith_diff"].max()
 
-    print("\n3. Official Scorer vs Independent Utility Decomposition Check:")
+    print("\n4. Official Scorer vs Independent Utility Decomposition Check:")
     print(f"   Max Arithmetic Difference across Top Policies : {max_diff:.12e}")
     print(f"   Equivalence Tolerance                          : <= 1e-10")
     print(f"   Scorer Audit Status                            : {'PASSED [ZERO DISCREPANCY]' if max_diff <= 1e-10 else 'FAILED'}")

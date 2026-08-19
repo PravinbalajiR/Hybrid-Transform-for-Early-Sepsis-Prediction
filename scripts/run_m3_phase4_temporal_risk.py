@@ -43,8 +43,12 @@ def print_flush(msg: str):
     print(msg, flush=True)
 
 # --------------------------------------------------------------------------------------
-# PHASE 4A: CAUSAL TEMPORAL RISK TRAJECTORY FEATURE EXTRACTION
+# PHASE 4A: CAUSAL TEMPORAL RISK TRAJECTORY FEATURE EXTRACTION & CANONICAL SCHEMA
 # --------------------------------------------------------------------------------------
+
+CANONICAL_HTR_FEATURE_NAMES = [
+    "p_t", "ma_2h", "ma_6h", "slope_1h", "accel_1h", "persist_th20", "occupancy_6h", "volatility_6h"
+]
 
 def extract_causal_temporal_features(probs: np.ndarray) -> dict:
     T = len(probs)
@@ -102,6 +106,14 @@ def extract_causal_temporal_features(probs: np.ndarray) -> dict:
         "volatility_6h": volatility_6h,
     }
 
+def build_htr_features(probs: np.ndarray) -> np.ndarray:
+    feats = extract_causal_temporal_features(probs)
+    X_t = np.column_stack([
+        feats["p_t"], feats["ma_2h"], feats["ma_6h"], feats["slope_1h"],
+        feats["accel_1h"], feats["persist_th20"], feats["occupancy_6h"], feats["volatility_6h"]
+    ])
+    return X_t
+
 # --------------------------------------------------------------------------------------
 # PHASE 4C: UTILITY-AWARE TEMPORAL RISK CONTROL (U-TRC) POLICY
 # --------------------------------------------------------------------------------------
@@ -122,7 +134,6 @@ class UTRCPolicy(BaseAlertPolicy):
         if T == 0: return np.zeros(0, dtype=int)
 
         feats = extract_causal_temporal_features(probs)
-        # Composite Risk State R_t
         R_t = (
             self.alpha * feats["p_t"] +
             self.beta * feats["ma_2h"] +
@@ -153,7 +164,7 @@ class UTRCPolicy(BaseAlertPolicy):
         return alerts
 
 # --------------------------------------------------------------------------------------
-# PHASE 4F: HARD-CASE SPECIALIST POLICY (LIGHTWEIGHT VALIDATION-TRAINED SPECIALIST)
+# PHASE 4F: HARD-CASE SPECIALIST POLICY (CANONICAL 8-FEATURE INFERENCE)
 # --------------------------------------------------------------------------------------
 
 class SpecialistTRCPolicy(BaseAlertPolicy):
@@ -168,17 +179,13 @@ class SpecialistTRCPolicy(BaseAlertPolicy):
         if self.spec_model is None or len(probs) == 0:
             return base_alerts
 
-        T = len(probs)
-        feats = extract_causal_temporal_features(probs)
-        # Matrix of 5 causal features
-        X_t = np.column_stack([
-            feats["p_t"], feats["ma_2h"], feats["slope_1h"], feats["persist_th20"], feats["occupancy_6h"]
-        ])
+        X_t = build_htr_features(probs)
+        expected_n = getattr(self.spec_model, "n_features_in_", 8)
+        assert X_t.shape[1] == expected_n, f"HTR feature mismatch: inference={X_t.shape[1]}, model={expected_n}"
 
         spec_probs = self.spec_model.predict_proba(X_t)[:, 1]
         spec_alerts = (spec_probs >= self.spec_th).astype(int)
 
-        # Specialist triggers if base alert did not fire but specialist detects high risk trajectory
         combined = np.maximum(base_alerts, spec_alerts)
         return combined
 
@@ -258,14 +265,10 @@ def main():
 
     print_flush(f"Loaded Validation Cohort : {len(val_labels):,} patients ({len(val_y_true):,} hourly records).\n")
 
-    # ----------------------------------------------------------------------------------
-    # PHASE 4G: VALIDATION-ONLY CALIBRATION (PLATT SCALING)
-    # ----------------------------------------------------------------------------------
+    # 1. Validation Platt Calibration Scaling
     print_flush("1. Fitting Validation-Only Platt Calibration Scaling...")
-    # Sample subset of hourly labels for logistic calibration
     val_flat_y = np.concatenate(val_labels)
     val_flat_p = np.concatenate(val_probs)
-    # Log-odds logit transform
     clipped_p = np.clip(val_flat_p, 1e-6, 1 - 1e-6)
     logits_p = np.log(clipped_p / (1 - clipped_p)).reshape(-1, 1)
 
@@ -281,16 +284,11 @@ def main():
 
     print_flush("   Platt Scaling fitted successfully on validation logits.\n")
 
-    # ----------------------------------------------------------------------------------
-    # PHASE 4F: TRAIN HARD-CASE SPECIALIST MODEL ON VALIDATION DATA
-    # ----------------------------------------------------------------------------------
+    # 2. Train Hard-Case Specialist Classifier using Canonical 8 Features
     print_flush("2. Training Lightweight Hard-Case Specialist Classifier on Validation Data...")
     X_spec_list, y_spec_list = [], []
     for lbls, prs in zip(val_labels, val_probs):
-        feats = extract_causal_temporal_features(prs)
-        X_t = np.column_stack([
-            feats["p_t"], feats["ma_2h"], feats["slope_1h"], feats["persist_th20"], feats["occupancy_6h"]
-        ])
+        X_t = build_htr_features(prs)
         X_spec_list.append(X_t)
         y_spec_list.append(lbls)
 
@@ -299,20 +297,19 @@ def main():
 
     spec_classifier = LogisticRegression(C=0.1, class_weight="balanced", max_iter=200)
     spec_classifier.fit(X_spec_all, y_spec_all)
-    print_flush("   Specialist Classifier trained on validation temporal features.\n")
 
-    # ----------------------------------------------------------------------------------
-    # PHASE 4C & 4D: SWEEP U-TRC & COMPOSITE POLICIES ON VALIDATION COHORT
-    # ----------------------------------------------------------------------------------
+    # Feature Schema Assertion
+    assert X_spec_all.shape[1] == spec_classifier.n_features_in_ == 8, f"Feature count error: expected 8, got {X_spec_all.shape[1]}"
+    print_flush(f"   Specialist Classifier trained on {spec_classifier.n_features_in_} canonical features.\n")
+
+    # 3. Sweep Candidate Policies
     print_flush("3. Sweeping Candidate U-TRC & Composite Temporal Policies...")
     candidate_policies = []
 
-    # A. Baseline Cooldown Policies
     for th in [0.15, 0.18, 0.19, 0.20, 0.22, 0.25]:
         for C in [12, 18, 24, 36, 48]:
             candidate_policies.append(("Cooldown", CooldownPolicy(th, C)))
 
-    # B. U-TRC Policies (alpha, beta, gamma, delta, threshold, cooldown)
     for alpha in [0.4, 0.5, 0.6]:
         for beta in [0.2, 0.3, 0.4]:
             for gamma in [0.05, 0.1, 0.2]:
@@ -321,12 +318,9 @@ def main():
                         pol = UTRCPolicy(alpha=alpha, beta=beta, gamma=gamma, delta=0.1, threshold=th, cooldown_hours=C, K_persist=1)
                         candidate_policies.append(("U-TRC", pol))
 
-    # C. Specialist + Base Cooldown
     base_cool = CooldownPolicy(0.19, 36)
     spec_policy = SpecialistTRCPolicy(base_cool, spec_classifier, spec_th=0.60)
     candidate_policies.append(("Specialist", spec_policy))
-
-    print_flush(f"   Generated {len(candidate_policies):,} Phase 4 candidate policies.")
 
     val_results = []
     best_val_u_so_far = -999.0
@@ -342,16 +336,6 @@ def main():
     df_val_clean = df_val.drop(columns=["policy_obj"])
     df_val_clean.to_csv(RESULTS_DIR / "m3_phase4_policy_sweep.csv", index=False)
     print_flush(f"\nSaved full Phase 4 validation policy sweep to: results/m3_phase4_policy_sweep.csv")
-
-    # Save Literature Matrix (Phase 4L)
-    lit_matrix = [
-        {"Paper": "PhysioNet Challenge Baseline", "Year": 2019, "Dataset": "PhysioNet 2019", "Model": "Gradient Boosting", "Temporal_policy": "Raw Thresholding", "Utility_optimization": "No", "Cooldown": "No", "Reported_utility": -0.1200, "AUROC": 0.8500, "Gap_relative_to_M3_TAP": "Baseline"},
-        {"Paper": "M3-TAP Phase 1 (Baseline)", "Year": 2026, "Dataset": "PhysioNet 2019", "Model": "Hybrid Transformer M3", "Temporal_policy": "Cooldown(24h)", "Utility_optimization": "Yes", "Cooldown": "Yes", "Reported_utility": -0.4478, "AUROC": 0.9617, "Gap_relative_to_M3_TAP": "+0.6962 Boost"},
-        {"Paper": "M3-TAP Phase 2 (Validation-Locked)", "Year": 2026, "Dataset": "PhysioNet 2019", "Model": "Hybrid Transformer M3", "Temporal_policy": "Cooldown(th=0.20, 24h)", "Utility_optimization": "Yes", "Cooldown": "Yes", "Reported_utility": -0.2703, "AUROC": 0.9617, "Gap_relative_to_M3_TAP": "+0.8737 Boost"},
-        {"Paper": "M3-TAP Phase 4 (Proposed U-TRC)", "Year": 2026, "Dataset": "PhysioNet 2019", "Model": "Hybrid Transformer M3 + U-TRC", "Temporal_policy": "U-TRC Risk Trajectory", "Utility_optimization": "Yes", "Cooldown": "Yes", "Reported_utility": -0.2573, "AUROC": 0.9617, "Gap_relative_to_M3_TAP": "Proposed Peak"},
-    ]
-    pd.DataFrame(lit_matrix).to_csv(RESULTS_DIR / "PHASE4_NOVELTY_LITERATURE_MATRIX.csv", index=False)
-    print_flush("Saved Literature Novelty Matrix to: results/PHASE4_NOVELTY_LITERATURE_MATRIX.csv")
 
 if __name__ == "__main__":
     main()

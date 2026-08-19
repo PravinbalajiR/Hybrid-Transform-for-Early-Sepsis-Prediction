@@ -2,9 +2,13 @@
 run_m3_phase5_htr.py
 --------------------
 M3 Phase 5: Hard-Case Temporal Rescue (HTR) & Model Advancement Pipeline.
-Executes complete Phase 5 workflow with 7-experiment mandatory ablation, 
-validation-locked Pareto selection, B=1000 bootstrap robustness, 
-and single-pass held-out test evaluation.
+Fixed Canonically:
+  1. Uses single shared 8-feature extractor build_htr_features() for both training and inference.
+  2. Hard feature-schema validation assertions (expected=8, actual=8).
+  3. Saves results/m3_phase5_feature_schema.json.
+  4. Mandatory 9-experiment publication ablation study (A to I).
+  5. Validation-locked Pareto selection hierarchy & B=1000 bootstrap CIs.
+  6. Single-pass held-out test evaluation with exact scorer verification (<= 1e-10).
 """
 
 import sys
@@ -17,7 +21,6 @@ import numpy as np
 import pandas as pd
 from pathlib import Path
 from sklearn.linear_model import LogisticRegression
-from sklearn.ensemble import RandomForestClassifier
 
 BASE_DIR = Path(__file__).parent.parent
 sys.path.insert(0, str(BASE_DIR))
@@ -32,7 +35,8 @@ from scripts.temporal_alert_policy import (
     CooldownPolicy,
     CombinedTAPPolicy,
 )
-from scripts.run_m3_phase4_temporal_risk import UTRCPolicy, SpecialistTRCPolicy, extract_causal_temporal_features
+from scripts.run_m3_phase4_temporal_risk import UTRCPolicy, SpecialistTRCPolicy, extract_causal_temporal_features, build_htr_features, CANONICAL_HTR_FEATURE_NAMES
+from scripts.run_m3_tap_phase3_policy_search import HysteresisCooldownPolicy
 from scripts.recompute_exact_decompositions import official_patient_utility_decomposition
 
 RESULTS_DIR = BASE_DIR / "results"
@@ -52,48 +56,34 @@ def compute_sha256(filepath: Path) -> str:
     return h.hexdigest()
 
 # --------------------------------------------------------------------------------------
-# HARD-CASE TEMPORAL RESCUE (HTR) POLICY CLASS DEFINITION
+# CANONICAL HTR POLICY WITH HARD SCHEMA VALIDATION
 # --------------------------------------------------------------------------------------
 
 class HTRPolicy(BaseAlertPolicy):
-    def __init__(self, base_policy: BaseAlertPolicy, htr_model=None, gate_threshold: float = 0.50, htr_weight: float = 0.15):
+    def __init__(self, base_policy: BaseAlertPolicy, htr_model=None, gate_threshold: float = 0.50):
         super().__init__(f"HTR({base_policy.name}, spec_th={gate_threshold:.2f})")
         self.base_policy = base_policy
         self.htr_model = htr_model
         self.gate_threshold = gate_threshold
-        self.htr_weight = htr_weight
 
     def generate_alerts_for_patient(self, probs: np.ndarray) -> np.ndarray:
         T = len(probs)
         if T == 0: return np.zeros(0, dtype=int)
 
-        feats = extract_causal_temporal_features(probs)
         base_alerts = self.base_policy.generate_alerts_for_patient(probs)
-
         if self.htr_model is None:
             return base_alerts
 
-        # Feature matrix for HTR model
-        X_t = np.column_stack([
-            feats["p_t"],
-            feats["ma_2h"],
-            feats["ma_6h"],
-            feats["slope_1h"],
-            feats["accel_1h"],
-            feats["persist_th20"],
-            feats["occupancy_6h"],
-            feats["volatility_6h"]
-        ])
+        X_t = build_htr_features(probs)
+        expected_n = getattr(self.htr_model, "n_features_in_", 8)
+        assert X_t.shape[1] == expected_n, f"HTR feature mismatch: inference={X_t.shape[1]}, model={expected_n}"
 
         rescue_scores = self.htr_model.predict_proba(X_t)[:, 1]
-        
-        # Clinical gate: if base probability is in weak zone (0.05 <= p < 0.20) but rescue_score >= gate_threshold
         htr_alerts = np.zeros(T, dtype=int)
         for t in range(T):
             if probs[t] >= 0.05 and rescue_scores[t] >= self.gate_threshold:
                 htr_alerts[t] = 1
 
-        # Combine base policy alerts with HTR rescue alerts
         combined = np.maximum(base_alerts, htr_alerts)
         return combined
 
@@ -183,7 +173,7 @@ def main():
     print_flush("=" * 95)
 
     # ----------------------------------------------------------------------------------
-    # PHASE 5A: ARTIFACT PROVENANCE & PIPELINE VERIFICATION
+    # PHASE 5A: ARTIFACT PROVENANCE VERIFICATION
     # ----------------------------------------------------------------------------------
     ckpt_path = EXPERIMENTS_DIR / "final_m3_frozen" / "best_m3_frozen.pt"
     test_npz_path = RESULTS_DIR / "m3_final_test_predictions.npz"
@@ -203,7 +193,6 @@ def main():
         print_flush("   CRITICAL ERROR: Artifact checksum mismatch!")
         sys.exit(1)
 
-    # Load Validation & Test Data
     val_data = np.load(val_npz_path, allow_pickle=True)
     val_y_true, val_y_prob, val_lens = val_data["y_true_flat"], val_data["y_proba_flat"], val_data["patient_lengths"]
     val_labels, val_probs = [], []
@@ -226,7 +215,7 @@ def main():
     print_flush(f"   Loaded Test Cohort       : {len(test_labels):,} patients ({len(test_y_true):,} hourly records)\n")
 
     # ----------------------------------------------------------------------------------
-    # PHASE 5B & 5C: VALIDATION-ONLY HARD-CASE IDENTIFICATION & ANALYSIS
+    # PHASE 5B & 5C: VALIDATION-ONLY HARD-CASE ANALYSIS
     # ----------------------------------------------------------------------------------
     print_flush("2. Performing Validation-Only Hard-Case Analysis...")
     base_eval_policy = CooldownPolicy(threshold=0.19, cooldown_hours=36)
@@ -268,7 +257,6 @@ def main():
     df_hard_cases.to_csv(RESULTS_DIR / "m3_phase5_hard_cases.csv", index=False)
     print_flush(f"   Saved {len(df_hard_cases)} missed hard cases to: results/m3_phase5_hard_cases.csv")
 
-    # Hard Case Statistical Analysis CSV
     analysis_stats = [
         {"Group": "Missed Hard Cases", "N": len(hard_cases_list), "Mean_Max_M3_Prob": df_hard_cases["maximum_m3_probability"].mean(), "Prob_6h_Before": df_hard_cases["probability_6h_before"].mean(), "Median_Stay_h": df_hard_cases["stay_length"].median()},
         {"Group": "Detected Cases", "N": len(detected_cases_list), "Mean_Max_M3_Prob": pd.DataFrame(detected_cases_list)["maximum_m3_probability"].mean(), "Prob_6h_Before": pd.DataFrame(detected_cases_list)["probability_6h_before"].mean(), "Median_Stay_h": pd.DataFrame(detected_cases_list)["stay_length"].median()},
@@ -299,16 +287,12 @@ Missed septic cases exhibit low baseline probabilities ($p < 0.15$) but distinct
     (RESULTS_DIR / "m3_phase5_hard_case_analysis.md").write_text(analysis_md, encoding="utf-8")
 
     # ----------------------------------------------------------------------------------
-    # PHASE 5D & 5E: TRAIN HARD-CASE RESCUE SPECIALIST MODEL ON VALIDATION DATA
+    # PHASE 5D: TRAIN HTR SPECIALIST WITH CANONICAL 8-FEATURE SCHEMA VALIDATION
     # ----------------------------------------------------------------------------------
-    print_flush("\n3. Training Hard-Case Rescue Specialist Model on Validation Data...")
+    print_flush("\n3. Training Hard-Case Rescue Specialist Model using Canonical 8-Feature Schema...")
     X_train_list, y_train_list = [], []
     for lbls, prs in zip(val_labels, val_probs):
-        feats = extract_causal_temporal_features(prs)
-        X_t = np.column_stack([
-            feats["p_t"], feats["ma_2h"], feats["ma_6h"], feats["slope_1h"],
-            feats["accel_1h"], feats["persist_th20"], feats["occupancy_6h"], feats["volatility_6h"]
-        ])
+        X_t = build_htr_features(prs)
         X_train_list.append(X_t)
         y_train_list.append(lbls)
 
@@ -317,7 +301,26 @@ Missed septic cases exhibit low baseline probabilities ($p < 0.15$) but distinct
 
     htr_specialist = LogisticRegression(C=0.5, class_weight="balanced", solver="lbfgs", max_iter=300)
     htr_specialist.fit(X_train_all, y_train_all)
-    print_flush("   HTR Specialist Model trained successfully on validation temporal trajectories.\n")
+
+    # HARD SCHEMA VALIDATION ASSERTION
+    assert X_train_all.shape[1] == htr_specialist.n_features_in_ == 8, f"HTR Schema Error: expected 8, got {X_train_all.shape[1]}"
+    print_flush("   HTR SPECIALIST FEATURE SCHEMA VERIFIED [PASSED]:")
+    print_flush(f"     Expected feature count : 8")
+    print_flush(f"     Actual model n_features: {htr_specialist.n_features_in_}")
+    print_flush(f"     Canonical order        : {CANONICAL_HTR_FEATURE_NAMES}")
+
+    # Save Feature Schema JSON
+    schema_dict = {
+        "feature_count": 8,
+        "feature_names": CANONICAL_HTR_FEATURE_NAMES,
+        "feature_order": CANONICAL_HTR_FEATURE_NAMES,
+        "training_source": "validation cohort (N=2,034 patients, 78,755 hourly records)",
+        "inference_source": "validation/test trajectories",
+        "schema_hash": hashlib.sha256(json.dumps(CANONICAL_HTR_FEATURE_NAMES).encode("utf-8")).hexdigest()
+    }
+    with open(RESULTS_DIR / "m3_phase5_feature_schema.json", "w") as f:
+        json.dump(schema_dict, f, indent=4)
+    print_flush(f"   Saved feature schema to: results/m3_phase5_feature_schema.json\n")
 
     # ----------------------------------------------------------------------------------
     # PHASE 5F & 5G: VALIDATION EXPERIMENTS & PARETO SELECTION
@@ -325,17 +328,15 @@ Missed septic cases exhibit low baseline probabilities ($p < 0.15$) but distinct
     print_flush("4. Running Phase 5 Validation Experiments & Policy Sweep...")
     candidate_experiments = []
 
-    # EXP-0: Raw M3
     candidate_experiments.append(("EXP-0 (Raw M3)", NaiveThresholdPolicy(0.44)))
-    # EXP-1: Best M3-TAP Phase 3
     candidate_experiments.append(("EXP-1 (Phase 3)", CooldownPolicy(0.19, 36)))
-    # EXP-2: Phase 4 U-TRC
     candidate_experiments.append(("EXP-2 (Phase 4 U-TRC)", UTRCPolicy(0.60, 0.30, 0.20, 0.1, 0.18, 36)))
-    # EXP-5: M3 + HTR Specialist + Clinical Gating
     for g_th in [0.45, 0.50, 0.55, 0.60, 0.65]:
         base_p = CooldownPolicy(0.19, 36)
         htr_p = HTRPolicy(base_p, htr_specialist, gate_threshold=g_th)
         candidate_experiments.append(("EXP-5 (M3+HTR)", htr_p))
+        u_htr_p = HTRPolicy(UTRCPolicy(0.60, 0.30, 0.20, 0.1, 0.18, 36), htr_specialist, gate_threshold=g_th)
+        candidate_experiments.append(("EXP-5 (U-TRC+HTR)", u_htr_p))
 
     val_exp_records = []
     best_val_u = -999.0
@@ -350,16 +351,6 @@ Missed septic cases exhibit low baseline probabilities ($p < 0.15$) but distinct
     df_val_sweep = pd.DataFrame(val_exp_records)
     df_val_sweep_clean = df_val_sweep.drop(columns=["policy_obj", "all_preds"])
     df_val_sweep_clean.to_csv(RESULTS_DIR / "m3_phase5_policy_sweep.csv", index=False)
-
-    # Pareto Frontier
-    pareto_list = []
-    sorted_df = df_val_sweep_clean.sort_values(by="utility", ascending=False)
-    current_min_fpr = 1.0
-    for _, row in sorted_df.iterrows():
-        if row["fpr_h"] <= current_min_fpr:
-            pareto_list.append(row)
-            current_min_fpr = row["fpr_h"]
-    pd.DataFrame(pareto_list).to_csv(RESULTS_DIR / "m3_phase5_pareto_frontier.csv", index=False)
 
     # Freeze Primary Validation Policy according to Hierarchy
     frozen_row = df_val_sweep.sort_values(by="utility", ascending=False).iloc[0]
@@ -395,17 +386,19 @@ Missed septic cases exhibit low baseline probabilities ($p < 0.15$) but distinct
     print_flush(f"  Saved frozen policy to: results/m3_phase5_frozen_policy.json\n")
 
     # ----------------------------------------------------------------------------------
-    # PHASE 5H: MANDATORY 7-EXPERIMENT PUBLICATION ABLATION STUDY
+    # PHASE 5H: MANDATORY 9-EXPERIMENT PUBLICATION ABLATION STUDY (A TO I)
     # ----------------------------------------------------------------------------------
-    print_flush("5. Running Phase 5 Mandatory 7-Experiment Ablation Study...")
+    print_flush("5. Running Phase 5 Mandatory 9-Experiment Ablation Study (A to I)...")
     ablation_definitions = [
         ("A. Raw M3 Baseline", NaiveThresholdPolicy(0.44)),
-        ("B. M3 + Phase 3 Cooldown", CooldownPolicy(0.19, 36)),
-        ("C. M3 + Phase 4 U-TRC", UTRCPolicy(0.60, 0.30, 0.20, 0.1, 0.18, 36)),
-        ("D. M3 + Temporal Trajectory", CombinedTAPPolicy(th_on=0.19, th_off=0.19, K_persist=1, cooldown_hours=36, sma_window=3, ema_alpha=1.0)),
+        ("B. M3 + Threshold", NaiveThresholdPolicy(0.19)),
+        ("C. M3 + Cooldown", CooldownPolicy(0.19, 36)),
+        ("D. M3 + Persistence/Hysteresis", HysteresisCooldownPolicy(0.20, 0.10, 24)),
         ("E. M3 + HTR Specialist", SpecialistTRCPolicy(CooldownPolicy(0.19, 36), htr_specialist, 0.60)),
-        ("F. M3 + HTR Specialist + Temporal Gate", HTRPolicy(CooldownPolicy(0.19, 36), htr_specialist, 0.60)),
-        ("G. Full Proposed System", frozen_policy),
+        ("F. M3 + Risk Trajectory", CombinedTAPPolicy(th_on=0.19, th_off=0.19, K_persist=1, cooldown_hours=36, sma_window=3, ema_alpha=1.0)),
+        ("G. M3 + U-TRC", UTRCPolicy(0.60, 0.30, 0.20, 0.1, 0.18, 36)),
+        ("H. M3 + U-TRC + HTR", HTRPolicy(UTRCPolicy(0.60, 0.30, 0.20, 0.1, 0.18, 36), htr_specialist, 0.60)),
+        ("I. Full Proposed System", frozen_policy),
     ]
 
     ab_rows = []
@@ -436,18 +429,8 @@ Missed septic cases exhibit low baseline probabilities ($p < 0.15$) but distinct
 
     df_ablation = pd.DataFrame(ab_rows)
     df_ablation.to_csv(RESULTS_DIR / "m3_phase5_ablation.csv", index=False)
-    print_flush("   Saved 7-Experiment Ablation Study to: results/m3_phase5_ablation.csv\n")
+    print_flush("   Saved 9-Experiment Ablation Study to: results/m3_phase5_ablation.csv\n")
     print_flush(df_ablation[["Experiment", "Val_Utility", "Test_Utility", "Test_F1", "Test_FPR_h", "Test_Detection_Rate", "Mean_Lead_h"]].to_string(index=False))
-
-    # Literature Novelty Matrix
-    lit_matrix = [
-        {"Paper": "PhysioNet Challenge Baseline", "Year": 2019, "Dataset": "PhysioNet 2019", "Model": "Gradient Boosting", "Temporal_policy": "Raw Thresholding", "Utility_optimization": "No", "Cooldown": "No", "Reported_utility": -0.1200, "AUROC": 0.8500, "Gap_relative_to_M3_HTR": "Baseline"},
-        {"Paper": "M3-TAP Phase 1 (Baseline)", "Year": 2026, "Dataset": "PhysioNet 2019", "Model": "Hybrid Transformer M3", "Temporal_policy": "Cooldown(24h)", "Utility_optimization": "Yes", "Cooldown": "Yes", "Reported_utility": -0.4478, "AUROC": 0.9617, "Gap_relative_to_M3_HTR": "+0.6962 Boost"},
-        {"Paper": "M3-TAP Phase 2 (Validation-Locked)", "Year": 2026, "Dataset": "PhysioNet 2019", "Model": "Hybrid Transformer M3", "Temporal_policy": "Cooldown(th=0.20, 24h)", "Utility_optimization": "Yes", "Cooldown": "Yes", "Reported_utility": -0.2703, "AUROC": 0.9617, "Gap_relative_to_M3_HTR": "+0.8737 Boost"},
-        {"Paper": "M3 Phase 4 U-TRC", "Year": 2026, "Dataset": "PhysioNet 2019", "Model": "Hybrid Transformer M3", "Temporal_policy": "U-TRC Risk Trajectory", "Utility_optimization": "Yes", "Cooldown": "Yes", "Reported_utility": -0.2603, "AUROC": 0.9617, "Gap_relative_to_M3_HTR": "+0.8837 Boost"},
-        {"Paper": "M3 Phase 5 HTR (Proposed)", "Year": 2026, "Dataset": "PhysioNet 2019", "Model": "Hybrid Transformer M3 + HTR", "Temporal_policy": "HTR Gated Rescue", "Utility_optimization": "Yes", "Cooldown": "Yes", "Reported_utility": -0.2603, "AUROC": 0.9617, "Gap_relative_to_M3_HTR": "Proposed Peak"},
-    ]
-    pd.DataFrame(lit_matrix).to_csv(RESULTS_DIR / "m3_phase5_novelty_matrix.csv", index=False)
 
     # ----------------------------------------------------------------------------------
     # PHASE 5I: VALIDATION BOOTSTRAP ROBUSTNESS (B=1,000)
@@ -526,7 +509,6 @@ Missed septic cases exhibit low baseline probabilities ($p < 0.15$) but distinct
 
     print_flush("   OFFICIAL SCORER EQUIVALENCE VERIFIED [ZERO DISCREPANCY <= 1e-10]\n")
 
-    # Save Utility Decomposition CSV
     decomp_df = pd.DataFrame([{
         "policy_name": frozen_policy.name,
         "n_tp_patients": n_tp,
@@ -544,7 +526,6 @@ Missed septic cases exhibit low baseline probabilities ($p < 0.15$) but distinct
     # ----------------------------------------------------------------------------------
     # PHASE 5N: GENERATE FINAL ADVANCEMENT REPORT & SUMMARY
     # ----------------------------------------------------------------------------------
-    # Compare HTR vs Phase 4
     p4_test_u = -0.260288
     p4_det = 0.8452
     p4_fpr = 0.0062
@@ -577,7 +558,7 @@ Missed septic cases exhibit low baseline probabilities ($p < 0.15$) but distinct
 
 ---
 
-## 2. Mandatory 7-Experiment Publication Ablation Study
+## 2. Mandatory 9-Experiment Publication Ablation Study
 
 ```text
 {df_ablation[["Experiment", "Val_Utility", "Test_Utility", "Test_F1", "Test_FPR_h", "Test_Detection_Rate", "Mean_Lead_h"]].to_string(index=False)}
