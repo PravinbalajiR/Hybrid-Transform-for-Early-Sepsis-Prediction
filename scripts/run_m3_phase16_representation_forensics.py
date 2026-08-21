@@ -558,7 +558,21 @@ def main():
             id_a, id_b = exp_ids[i], exp_ids[j]
             st_a, st_b = checkpoints_dict[id_a], checkpoints_dict[id_b]
 
-            max_w_diff = max(float(torch.abs(st_a[k].float() - st_b[k].float()).max()) for k in st_a.keys())
+            diffs = []
+            for k in st_a.keys():
+                t1, t2 = st_a[k].float(), st_b[k].float()
+                if t1.shape != t2.shape:
+                    min_shape = tuple(min(s1, s2) for s1, s2 in zip(t1.shape, t2.shape))
+                    if len(min_shape) == 1:
+                        t1_sub, t2_sub = t1[:min_shape[0]], t2[:min_shape[0]]
+                    elif len(min_shape) == 2:
+                        t1_sub, t2_sub = t1[:min_shape[0], :min_shape[1]], t2[:min_shape[0], :min_shape[1]]
+                    else:
+                        t1_sub, t2_sub = t1, t2
+                    diffs.append(float(torch.abs(t1_sub - t2_sub).max()))
+                else:
+                    diffs.append(float(torch.abs(t1 - t2).max()))
+            max_w_diff = max(diffs) if diffs else 0.0
             min_ckpt_diff = min(min_ckpt_diff, max_w_diff)
 
             p_a = np.concatenate(test_probs_dict[id_a]) if id_a != "A" else test_y_prob
