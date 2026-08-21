@@ -1,0 +1,2 @@
+Feature_Set,Hospital_Classifier_Accuracy,Hospital_Classifier_AUROC,Evidence
+HTR_Risk_Features,0.5129,0.44731469999999995,High hospital identifiability indicates strong cross-domain distribution shift.
