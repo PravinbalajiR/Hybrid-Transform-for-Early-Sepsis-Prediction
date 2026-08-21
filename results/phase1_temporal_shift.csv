@@ -1,0 +1,6 @@
+Metric,Emory_Val,BIDMC_Test
+Total_Patients,2034.0,20000.0
+Total_Hourly_Records,78755.0,753927.0
+Mean_Stay_Length_Hours,38.71927236971485,37.69635
+Median_Stay_Length_Hours,39.0,38.0
+Hourly_Sepsis_Prevalence_Pct,2.0455844402313232,1.3299696445465088

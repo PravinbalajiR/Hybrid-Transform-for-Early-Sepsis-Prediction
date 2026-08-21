@@ -1,0 +1,4 @@
+Framework,Year,Temporal_Ranking_Loss,Utility_Surrogate,Reported_Utility,AUROC
+PhysioNet Baseline,2019,No,No,-0.12,0.85
+M3 Baseline,2026,No,No,-1.144,0.9617
+M3-UTR (Phase 14 Proposed),2026,Yes,Yes,-0.2580466958515997,0.9617

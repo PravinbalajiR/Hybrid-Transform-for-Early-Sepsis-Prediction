@@ -1,0 +1,11 @@
+{
+    "is_cross_hospital_domain_shift_verified": true,
+    "official_scorer_diff": 0.0,
+    "validation_utility": 0.1579552925706763,
+    "test_utility": -0.2580466958515997,
+    "bootstrap_mean_utility": -0.25712979894191484,
+    "bootstrap_95_ci": [
+        -0.3113208950215433,
+        -0.20527548211331093
+    ]
+}

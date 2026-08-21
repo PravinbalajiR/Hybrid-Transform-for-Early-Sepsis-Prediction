@@ -1,0 +1,14 @@
+Phase,Experiment_Name,Claimed_Intervention,Classification,Actual_Training_Performed,Script_File,Script_Exists,Base_Checkpoint_SHA256,Test_NPZ_SHA256,Policy_Settings
+Phase 1,Raw M3 Baseline,Model,REAL_RETRAINED_MODEL,YES (Canonical Base Checkpoint),m3_advancement_baseline.py,True,5b22607444f4,02fd6eb78682,NaiveThreshold(0.44)
+Phase 2,M3 + Cooldown Policy,Policy,POLICY_ONLY,NO,run_m3_tap_phase3_policy_search.py,True,5b22607444f4,02fd6eb78682,"Cooldown(0.19, 36h)"
+Phase 3,M3-TAP Pareto Frontier,Policy,POLICY_ONLY,NO,analyze_m3_tap_phase3_pareto.py,True,5b22607444f4,02fd6eb78682,"PersistCooldown(0.19, 1, 36h)"
+Phase 4,M3 + U-TRC Policy,Policy,POLICY_ONLY,NO,run_m3_phase4_temporal_risk.py,True,5b22607444f4,02fd6eb78682,"U-TRC(0.60, 0.30, 0.20, 0.18, 36h)"
+Phase 5,M3 + HTR Specialist,Specialist/Policy,POLICY_ONLY,NO (Evaluated as Policy Layer over Frozen M3),run_m3_phase5_htr.py,True,5b22607444f4,02fd6eb78682,"SpecialistTRC(0.19, 36h)"
+Phase 6,Utility Feasibility Analysis,Diagnostic,POLICY_ONLY,NO,run_m3_phase6_feasibility.py,True,5b22607444f4,02fd6eb78682,"Cooldown(0.19, 36h)"
+Phase 7,M3 + U-TRL Representation,Model,POLICY_ONLY,NO (Evaluated as Policy Layer over Frozen M3),run_m3_phase7_utrl.py,True,5b22607444f4,02fd6eb78682,"UTRL(0.20, 36h)"
+Phase 8,M3-UAT Multi-Task Model,Model,POLICY_ONLY,NO (Evaluated as Policy Layer over Frozen M3),run_m3_phase8_uat.py,True,5b22607444f4,02fd6eb78682,"UAT(0.19, 36h)"
+Phase 9,M3 UBPG Policy Sweeps,Policy,POLICY_ONLY,NO,run_m3_phase9_ubpg.py,True,5b22607444f4,02fd6eb78682,"TemporalEvidence(0.5, 0.3, 0.20, 36h)"
+Phase 10,Shift Diagnostics,Diagnostic,POLICY_ONLY,NO,run_m3_phase10_diagnostics.py,True,5b22607444f4,02fd6eb78682,"Cooldown(0.19, 36h)"
+Phase 11,M3-SR Shift-Robust Model,Model,POLICY_ONLY,NO (Evaluated as Policy Layer over Frozen M3),run_m3_phase11_m3sr.py,True,5b22607444f4,02fd6eb78682,"M3-SR(0.19, 36h)"
+Phase 12,M3-DR Domain-Robust Model,Model,POLICY_ONLY,NO (Evaluated as Policy Layer over Frozen M3),run_m3_phase12_domain_generalization.py,True,5b22607444f4,02fd6eb78682,"M3-DR(0.19, 36h)"
+Phase 12.5,M3 Phase 12.5 Forensic Fix,Retrained Model Suite A-I,REAL_RETRAINED_MODEL,YES (Isolated A-I Retrained Suite),run_m3_phase12_5_forensic.py,True,5b22607444f4,02fd6eb78682,"ModelPredictor(0.19, 36h)"

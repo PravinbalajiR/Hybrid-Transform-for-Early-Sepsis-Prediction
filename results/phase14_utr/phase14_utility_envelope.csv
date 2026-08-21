@@ -1,0 +1,6 @@
+Level,Test_Utility,Description
+1. Current Predictions (Frozen Val Policy),-0.2580466958515997,Single-pass zero-leakage evaluation
+2. Oracle Threshold (Diagnostic Only),-0.241635397123232,Best test utility under optimal test threshold
+3. Oracle Temporal Cooldown Policy,-0.236635397123232,Optimal alert suppression policy per patient
+4. Oracle Ranking (Perfect Separability),0.826246,Theoretical upper bound on existing predictions
+5. Perfect Label Oracle,1.0,100% TP reward with zero false alarm penalty

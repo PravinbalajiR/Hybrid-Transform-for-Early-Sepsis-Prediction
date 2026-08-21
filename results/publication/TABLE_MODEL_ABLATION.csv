@@ -1,0 +1,5 @@
+Model_Variant,AUROC,AUPRC,Emory_Val_Utility,BIDMC_Test_Utility,Test_F1,Test_FPR_h,Patient_Detection_Rate,Mean_Lead_h
+A. Original M3 Baseline,0.9617,0.4231,-0.306,-1.144,0.3652,2.10%,70.4%,7.7h
+B. M3 + DANN (Domain Adaptation),0.9617,0.4231,-0.7552268244575687,-1.2688451115277284,0.018061843753010308,4.18%,100.0%,37.3h
+C. M3 + Utility Loss,0.9617,0.4231,0.138,-0.265,0.471,0.81%,87.1%,8.7h
+D. M3 + DANN + Utility Loss,0.9617,0.4231,0.1506,-0.2573,0.488,0.66%,85.3%,9.0h
