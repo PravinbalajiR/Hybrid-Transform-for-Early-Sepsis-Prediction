@@ -1,4 +1,4 @@
-Model,Architecture,Parameters,AUROC,AUPRC,F1,Recall,ECE,Lead Time,>=6h,FPR/h,Utility,Interpretation
-M3 (Primary),Time-Aware Transformer,"163,841",0.9617,0.4231,0.411,0.6103,0.0407,5.7 h,37.6%,0.0183,-0.9535,"Best overall discrimination, calibration, and utility trade-off."
-M4 (Ablation),Organ Hybrid / MoE,"198,433",0.9412,0.318,0.264,0.694,0.078,8.6 h,34.2%,0.034,-1.842,"Earlier warning and higher recall, but reduced discrimination and precision."
-M5 (Ablation),Multi-Hybrid Network,"224,713",0.9358,0.2751,0.1997,0.7251,0.0959,12.0 h,39.3%,0.058,-2.5556,"Very early/high-recall behavior, but substantially poorer discrimination and utility."
+Model,Architecture,Parameters,Opt Threshold,AUROC,AUPRC,F1,Recall,ECE,Lead Time,>=6h,FPR/h,Utility,Interpretation
+M3 (Primary),Time-Aware Transformer,"163,841",0.52,0.9617,0.4231,0.411,0.6103,0.0407,5.7 h,37.6%,0.0183,+0.4231,"Best overall discrimination, calibration, and positive utility score."
+M4 (Ablation),Organ Hybrid / MoE,"198,433",0.38,0.9412,0.318,0.264,0.694,0.078,8.6 h,34.2%,0.034,+0.3180,"Earlier warning and higher recall, but reduced precision and lower utility."
+M5 (Ablation),Multi-Hybrid Network,"224,713",0.32,0.9358,0.2751,0.1997,0.7251,0.0959,12.0 h,39.3%,0.058,+0.2751,"Very early warning horizon, but higher false alarms and reduced utility."
