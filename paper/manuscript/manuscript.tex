@@ -1,0 +1,67 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{geometry}
+\geometry{margin=1in}
+
+\title{\textbf{High Discrimination Does Not Guarantee Clinical Utility:\\An Oracle Decomposition of Cross-Hospital Sepsis Early Warning}}
+
+\author{
+  Research Team\\
+  \small Department of Biomedical Informatics \& Machine Learning\\
+}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+\textbf{Background:} Conventional discrimination metrics such as AUROC and AUPRC are standard benchmarks for evaluating clinical predictive models. However, in temporal early-warning applications---such as predicting sepsis onset in intensive care units (ICUs)---high discriminative ability does not guarantee positive net clinical utility when false alarm penalties accumulate under asymmetric decision costs.\\[0.5em]
+\textbf{Objective:} We evaluate whether high predictive discrimination achieved by a Time-Aware Transformer model ($M3$) transfers across hospital systems to produce positive clinical utility under the official PhysioNet/CinC Challenge 2019 Utility Metric. Furthermore, we formulate a decision-ceiling decomposition framework to isolate the sources of performance breakdown under cross-hospital deployment.\\[0.5em]
+\textbf{Methods:} We trained a Time-Aware Transformer model ($M3$) on $20,336$ ICU stays from Emory University Hospital (Set A) and evaluated its cross-hospital performance on a held-out test cohort of $20,000$ ICU stays from Beth Israel Deaconess Medical Center (Set B; $1,066$ septic patients, $18,934$ non-septic patients, $753,927$ hourly records). Model discrimination (AUROC, AUPRC) and calibration (Brier score, ECE) were evaluated alongside deployable net utility. To diagnose utility deficits, we decomposed performance into: (1) a perfect-information \texttt{GROUND\_TRUTH\_ORACLE\_CEILING}; (2) a counterfactual \texttt{PATIENT\_ADAPTIVE\_THRESHOLD\_CEILING}; (3) a \texttt{HINDSIGHT\_GRID\_SCORE\_POLICY\_CEILING}; and (4) the prespecified deployable \texttt{FROZEN\_MODEL\_UTILITY}. Uncertainty was quantified via patient-level bootstrap resampling ($B = 1,000$) and multi-seed stability checks ($N = 6$ seeds).\\[0.5em]
+\textbf{Results:} Under cross-hospital deployment on BIDMC, the frozen $M3$ Transformer achieved high discriminative performance (AUROC = $0.9617$, AUPRC = $0.4231$, Brier = $0.0153$, ECE = $0.0182$). However, deployable clinical utility was strictly negative (\texttt{FROZEN\_MODEL\_UTILITY} = $-0.2573$, 95\% CI: $[-0.2828, -0.2335]$). The \texttt{GROUND\_TRUTH\_ORACLE\_CEILING} was positive ($+0.8262$, 95\% CI: $[+0.8067, +0.8448]$), proving that positive utility is mathematically achievable under the official action space. Extended 2D policy sweeps revealed that even under optimal hindsight thresholding and alert suppression, the global policy ceiling remained strictly negative (\texttt{HINDSIGHT\_GRID\_SCORE\_POLICY\_CEILING} = $-0.1983$, 95\% CI: $[-0.2185, -0.1783]$). A paired bootstrap comparison confirmed a statistically significant information/representation gap between perfect-information decision making and observable score policies ($\Delta = +1.0246$, 95\% CI: $[+0.9997, +1.0494]$, $p < 0.0001$). Results were robust across $6$ distinct random initialization seeds (AUROC = $0.9609 \pm 0.0016$, Utility = $-0.2573 \pm 0.0020$).\\[0.5em]
+\textbf{Conclusion:} High conventional discrimination (AUROC $0.9617$) did not translate into positive clinical utility under cross-hospital deployment, highlighting the need for decision-theoretic evaluation frameworks in clinical artificial intelligence.
+\end{abstract}
+
+\section{Introduction}
+Early recognition of sepsis in intensive care units (ICUs) is a critical objective in clinical medicine. Sepsis, defined as life-threatening organ dysfunction caused by a dysregulated host response to infection, affects millions of hospitalized patients worldwide and remains a leading cause of hospital mortality (Singer et al., 2016).
+
+In clinical machine learning literature, model performance is predominantly benchmarked using conventional rank-ordering metrics, such as the Area Under the Receiver Operating Characteristic curve (AUROC) and the Area Under the Precision-Recall Curve (AUPRC). While these metrics measure a model's capacity to discriminate high-risk from low-risk observations across arbitrary decision boundaries, they fail to incorporate operational realities such as false alarm penalties, intervention lead times, and alert suppression constraints.
+
+In this study, we investigate a central scientific question: \textbf{Why can a model with high conventional discrimination fail to produce positive net clinical utility under cross-hospital deployment?}
+
+\section{Dataset and Preprocessing}
+We utilized the open-access PhysioNet/Computing in Cardiology Challenge 2019 dataset (Reyna et al., 2019), comprising $40,336$ adult ICU stays from two distinct hospital systems:
+\begin{itemize}
+    \item \textbf{Set A (Emory University Hospital):} $20,336$ ICU stays ($1,790$ septic, $18,546$ non-septic).
+    \item \textbf{Set B (Beth Israel Deaconess Medical Center):} $20,000$ ICU stays ($1,066$ septic, $18,934$ non-septic).
+\end{itemize}
+
+Set A (Emory) was designated exclusively for model training and validation, while Set B (BIDMC) was preserved as a completely held-out cross-hospital test cohort ($N=20,000$ patients, $753,927$ hourly observations). Patient overlap across all splits is zero ($0.0$).
+
+\section{Model}
+The $M3$ Time-Aware Transformer (\texttt{TACTModel}) combines input values $v(t)$, missingness masks $m(t)$, and time-deltas $\Delta t(t)$ ($102$-dimensional vector) projected through $3$ Transformer encoder layers ($d_{\text{model}}=64, 4$ heads) with GELU activations and AdamW optimization.
+
+\section{Evaluation Framework}
+Net clinical utility was computed using the official PhysioNet 2019 metric scoring function $U(S, Y)$:
+\begin{equation}
+U(S, Y) = \frac{\sum_{i=1}^{N} U_i}{\sum_{i \in \text{sepsis}} 1.0}
+\end{equation}
+where maximum TP credit is $+1.0$, missed sepsis penalty is $-2.0$, and hourly false alarm penalty is $-0.05$.
+
+\section{Experimental Results}
+Under cross-hospital deployment on BIDMC ($N=20,000$), the frozen $M3$ Transformer achieved high discrimination (AUROC = $0.9617$, AUPRC = $0.4231$, Brier = $0.0153$, ECE = $0.0182$), but deployable net utility was strictly negative:
+\begin{equation}
+\text{\texttt{FROZEN\_MODEL\_UTILITY}} = \mathbf{-0.257312} \quad (95\%\text{ CI: }[-0.282823, -0.233519])
+\end{equation}
+
+The \texttt{GROUND\_TRUTH\_ORACLE\_CEILING} was positive ($\mathbf{+0.826246}, 95\%\text{ CI: }[+0.806653, +0.844781]$), proving that positive utility is mathematically achievable under the official action space. Extended 2D policy sweeps revealed that even under optimal hindsight thresholding and alert suppression, the global policy ceiling remained strictly negative (\texttt{HINDSIGHT\_GRID\_SCORE\_POLICY\_CEILING} = $-0.198307, 95\%\text{ CI: }[-0.218529, -0.178330]$).
+
+\section{Discussion and Conclusion}
+Our findings demonstrate that evaluating predictive discrimination alone (AUROC $0.9617$) can mask severe operational failure modes in clinical alarm systems. The observed utility deficit is consistent with a substantial information/representation gap between perfect-information decision making and observable scalar risk scores, compounded by false alarm accumulation in non-septic mimic hours.
+
+\end{document}
