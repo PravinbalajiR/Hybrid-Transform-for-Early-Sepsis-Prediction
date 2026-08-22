@@ -275,9 +275,9 @@ def main():
     })
 
     # Model 2: Time-Zero Gradient Boosted Trees
-    gbm_t0 = HistGradientBoostingClassifier(random_state=42).fit(X_t0_val, val_labels_binary)
-    p_t0_gbm_val = gbm_t0.predict_proba(X_t0_val)[:, 1]
-    p_t0_gbm_test = gbm_t0.predict_proba(X_t0_test)[:, 1]
+    gbm_t0 = HistGradientBoostingClassifier(random_state=42).fit(X_t0_val_proc, val_labels_binary)
+    p_t0_gbm_val = gbm_t0.predict_proba(X_t0_val_proc)[:, 1]
+    p_t0_gbm_test = gbm_t0.predict_proba(X_t0_test_proc)[:, 1]
     models_eval.append({
         "Feature_Set": "Time-Zero Only",
         "Classifier": "Gradient Boosted Trees",
@@ -307,9 +307,9 @@ def main():
     })
 
     # Model 4: Early Trajectory Gradient Boosted Trees
-    gbm_traj = HistGradientBoostingClassifier(random_state=42).fit(X_traj_val, val_labels_binary)
-    p_traj_gbm_val = gbm_traj.predict_proba(X_traj_val)[:, 1]
-    p_traj_gbm_test = gbm_traj.predict_proba(X_traj_test)[:, 1]
+    gbm_traj = HistGradientBoostingClassifier(random_state=42).fit(X_traj_val_proc, val_labels_binary)
+    p_traj_gbm_val = gbm_traj.predict_proba(X_traj_val_proc)[:, 1]
+    p_traj_gbm_test = gbm_traj.predict_proba(X_traj_test_proc)[:, 1]
     models_eval.append({
         "Feature_Set": "Early Trajectory",
         "Classifier": "Gradient Boosted Trees",
