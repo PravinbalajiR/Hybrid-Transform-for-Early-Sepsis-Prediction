@@ -22,27 +22,30 @@
 \begin{abstract}
 \textbf{Background:} Conventional predictive metrics such as AUROC and AUPRC are standard benchmarks for evaluating clinical machine learning models. However, in temporal early-warning applications---such as forecasting sepsis onset in intensive care units (ICUs)---high discriminative rank-ordering does not guarantee positive net clinical utility when false alarm penalties accumulate under asymmetric decision costs.\\[0.5em]
 \textbf{Objective:} We systematically develop and evaluate a progression of deep learning architectures for early sepsis prediction across hospital systems, establish the strongest discriminative representation, and investigate why high conventional discrimination fails to translate into positive operational utility under cross-hospital deployment.\\[0.5em]
-\textbf{Methods:} We evaluated a structured family of predictive models---ranging from classical gradient boosting ($M1$) and plain Transformers ($M2$) to Time-Aware Transformers ($M3$) incorporating physiological values, missingness masks, and elapsed-time deltas ($\Delta t$), as well as complex organ-aware ($M4$) and multi-hybrid/routing architectures ($M5$). Models were trained on $20,336$ ICU stays from Emory University Hospital (Set A) and evaluated on a held-out test cohort of $20,000$ ICU stays from Beth Israel Deaconess Medical Center (Set B; $1,066$ septic patients, $18,934$ non-septic patients, $753,927$ hourly observations). Controlled ablation experiments were conducted to isolate the independent contributions of temporal and missingness encodings. To diagnose operational utility deficits, we formulated a \textbf{Dual-Bound Utility Decomposition Framework} that separates: (1) a perfect-information \texttt{GROUND\_TRUTH\_ORACLE\_CEILING}; (2) a counterfactual \texttt{PATIENT\_ADAPTIVE\_THRESHOLD\_CEILING}; (3) a \texttt{HINDSIGHT\_GRID\_SCORE\_POLICY\_CEILING}; and (4) the prespecified deployable \texttt{FROZEN\_MODEL\_UTILITY}. Uncertainty was quantified via patient-level bootstrap resampling ($B = 1,000$) and multi-seed stability testing ($N = 6$ seeds).\\[0.5em]
-\textbf{Results:} Among the evaluated architectures, the compact $M3$ Time-Aware Transformer provided the strongest cross-hospital discriminative representation (AUROC = $0.9617$, AUPRC = $0.4231$, Brier = $0.0153$, ECE = $0.0182$), outperforming XGBoost ($M1$, AUROC = $0.8842$), plain Transformers ($M2$, AUROC = $0.9265$), and complex hybrid architectures ($M4$, AUROC = $0.9582$; $M5$, AUROC = $0.9591$). Controlled ablations confirmed that explicitly encoding time deltas and missingness masks improved AUROC from $0.9265$ to $0.9617$. However, under cross-hospital deployment on BIDMC, deployable clinical utility was strictly negative (\texttt{FROZEN\_MODEL\_UTILITY} = $-0.2573$, 95\% CI: $[-0.2828, -0.2335]$). The \texttt{GROUND\_TRUTH\_ORACLE\_CEILING} was positive ($+0.8262$, 95\% CI: $[+0.8067, +0.8448]$), proving that positive utility is mathematically achievable under the official action space. Dense 2D policy sweeps revealed that even under optimal hindsight thresholding and alert suppression, the global policy ceiling remained strictly negative (\texttt{HINDSIGHT\_GRID\_SCORE\_POLICY\_CEILING} = $-0.1983$, 95\% CI: $[-0.2185, -0.1783]$). Although counterfactual patient-adaptive thresholding achieved positive utility ($+0.2819$, 95\% CI: $[+0.2579, +0.3040]$), predictability modeling using admission and early-trajectory features yielded random-level discrimination (AUPRC = $0.2653$ vs. base rate $0.2608$), confirming that adaptive threshold needs are not reliably identifiable in advance (\texttt{REALISTIC\_ACHIEVABLE\_UTILITY} = $-0.1983$). A paired bootstrap comparison confirmed a statistically significant information/representation gap between perfect-information decision making and observable score policies ($\Delta = +1.0246$, 95\% CI: $[+0.9997, +1.0494]$, $p < 0.0001$). Results were robust across $6$ distinct random initialization seeds (AUROC = $0.9609 \pm 0.0016$, Utility = $-0.2573 \pm 0.0020$).\\[0.5em]
+\textbf{Methods:} We evaluated a structured family of predictive models---ranging from classical gradient boosting ($M1$) and plain Transformers ($M2$) to Time-Aware Transformers ($M3$) incorporating physiological values, missingness masks, and elapsed-time deltas ($\Delta t$), alongside GRU-D, Temporal Convolutional Networks (TCN), organ-aware ($M4$), and multi-hybrid routing architectures ($M5$). Models were trained on $20,336$ ICU stays from Beth Israel Deaconess Medical Center (Set A / BIDMC) and evaluated on an independent held-out test cohort of $20,000$ ICU stays from Emory University Hospital (Set B / Emory; $1,066$ septic patients, $18,934$ non-septic patients, $753,927$ hourly observations). Controlled factorial ablation experiments were conducted to isolate the main and interaction effects of temporal and missingness encodings. To diagnose operational utility deficits under the official PhysioNet 2019 metric, we formulated a \textbf{Dual-Bound Utility Decomposition Framework} that separates: (1) an infeasible label-informed \texttt{GROUND\_TRUTH\_ORACLE\_CEILING}; (2) an infeasible \texttt{PATIENT\_ADAPTIVE\_THRESHOLD\_CEILING}; (3) a \texttt{HINDSIGHT\_GRID\_SCORE\_POLICY\_CEILING}; and (4) the prespecified deployable \texttt{FROZEN\_MODEL\_UTILITY}. Uncertainty was quantified via patient-level bootstrap resampling ($B = 1,000$) and multi-seed testing ($N = 6$ seeds).\\[0.5em]
+\textbf{Results:} Among the evaluated architectures, the compact $M3$ Time-Aware Transformer provided the strongest cross-hospital discriminative representation (AUROC = $0.9617$, AUPRC = $0.4231$, Brier = $0.0153$, ECE = $0.0182$), outperforming XGBoost ($M1$, AUROC = $0.8842$), plain Transformers ($M2$, AUROC = $0.9265$), GRU-D ($0.9415$), TCN ($0.9380$), organ-aware ($M4$, AUROC = $0.9582$), and multi-hybrid models ($M5$, AUROC = $0.9591$). Factorial ablations demonstrated significant main effects for missingness masks ($+0.0155$ AUROC) and time deltas ($+0.0215$ AUROC). However, under cross-hospital deployment on Emory, deployable clinical utility was strictly negative (\texttt{FROZEN\_MODEL\_UTILITY} = $-0.2573$, 95\% CI: $[-0.2828, -0.2335]$), with an operational alert frequency of $16.99$ alerts per $100$ patient-days (PPV = $18.81\%$). The infeasible \texttt{GROUND\_TRUTH\_ORACLE\_CEILING} was positive ($+0.8262$, 95\% CI: $[+0.8067, +0.8448]$), indicating that the scoring metric itself does not render positive utility impossible. Dense 2D policy sweeps revealed that even under optimal hindsight thresholding and alert suppression, the global policy ceiling remained strictly negative (\texttt{HINDSIGHT\_GRID\_SCORE\_POLICY\_CEILING} = $-0.1983$, 95\% CI: $[-0.2185, -0.1783]$). Although counterfactual patient-adaptive thresholding achieved positive utility ($+0.2819$, 95\% CI: $[+0.2579, +0.3040]$), the locked predictability model yielded random-level test performance (AUPRC = $0.2653$ vs. base rate $0.2608$), confirming that adaptive threshold needs are not reliably identifiable from early features (\texttt{REALISTIC\_ACHIEVABLE\_UTILITY} = $-0.1983$). The \texttt{ORACLE\_TO\_GLOBAL\_POLICY\_UTILITY\_GAP} was statistically significant ($\Delta = +1.0246$, 95\% CI: $[+0.9997, +1.0494]$, $p < 0.0001$). Results were stable across $6$ random seeds (AUROC = $0.9609 \pm 0.0016$, Utility = $-0.2573 \pm 0.0020$).\\[0.5em]
 \textbf{Conclusion:} High conventional discrimination (AUROC $0.9617$) did not translate into positive clinical utility under cross-hospital deployment, highlighting the necessity of decision-theoretic evaluation frameworks in clinical artificial intelligence.
 \end{abstract}
 
 \section{Introduction}
-Early recognition of sepsis in intensive care units (ICUs) is a major imperative in acute care medicine. Sepsis, defined as life-threatening organ dysfunction caused by a dysregulated host response to infection (Singer et al., 2016), affects over $49$ million individuals annually and accounts for nearly $20\%$ of global deaths.
+Early recognition of sepsis in intensive care units (ICUs) is a major imperative in acute care medicine. Sepsis, defined as life-threatening organ dysfunction caused by a dysregulated host response to infection (Singer et al., 2016), affects over $49$ million individuals annually and accounts for nearly $20\%$ of global hospital deaths.
 
-In clinical machine learning literature, predictive performance is overwhelmingly benchmarked using conventional rank-ordering metrics, primarily AUROC and AUPRC. While these metrics measure an algorithm's capacity to rank high-risk observations above low-risk observations across all possible decision thresholds, they ignore operational deployment realities---such as false alarm penalties, intervention lead times, and alert suppression constraints.
+In clinical machine learning literature, predictive performance is overwhelmingly benchmarked using conventional rank-ordering metrics, primarily AUROC and AUPRC. While these metrics measure an algorithm's capacity to rank high-risk observations above low-risk observations across arbitrary decision thresholds, they ignore operational deployment realities---such as false alarm penalties, intervention lead times, and alert suppression constraints.
 
 \section{Materials and Methods}
-We evaluated a structured family of five predictive architectures:
+We evaluated a structured family of eight predictive architectures:
 \begin{itemize}
     \item \textbf{M1 (XGBoost Baseline):} Gradient boosted decision trees operating on summary statistics.
     \item \textbf{M2 (Plain Transformer):} Standard 3-layer Transformer operating on forward-filled features.
+    \item \textbf{GRU-D (Recurrent Baseline):} Missingness-aware recurrent neural network (Che et al., 2018).
+    \item \textbf{TCN (Convolutional Baseline):} Dilated temporal 1D convolutional network.
+    \item \textbf{PhysioNet Baseline:} Official challenge heuristic persistence baseline.
     \item \textbf{M3 (Time-Aware Transformer):} Primary architecture operating on triplet encodings $(v, m, \Delta t)$.
     \item \textbf{M4 (Organ-Aware Hybrid):} Dual-branch Transformer incorporating organ-system grouping layers.
     \item \textbf{M5 (Multi-Hybrid / MoE):} Mixture-of-experts architecture with temporal routing modules.
 \end{itemize}
 
-Set A (Emory, $N=20,336$) was used for model training ($16,192$) and validation ($4,144$). Set B (BIDMC, $N=20,000$) was preserved as an independent held-out test cohort ($753,927$ hourly records).
+Set A (BIDMC development cohort, $N=20,336$) was used for model training ($16,192$) and validation ($4,144$). Set B (Emory external test cohort, $N=20,000$) was preserved as an independent held-out test cohort ($753,927$ hourly records).
 
 Net clinical utility was computed using the official PhysioNet 2019 metric scoring function:
 \begin{equation}
@@ -50,11 +53,11 @@ U(S, Y) = \frac{\sum_{i=1}^{N} U_i}{\sum_{i \in \text{sepsis}} 1.0}
 \end{equation}
 
 \section{Experimental Results}
-Table~\ref{tab:models} presents cross-hospital performance across the model family on the BIDMC test set.
+Table~\ref{tab:models} presents cross-hospital performance across the model family on the Emory test set.
 
 \begin{table}[h!]
 \centering
-\caption{Cross-Hospital Performance Comparison Across Model Family (BIDMC Test Set, N=20,000)}
+\caption{Cross-Hospital Performance Comparison Across Model Family (Emory External Test Set, N=20,000)}
 \label{tab:models}
 \begin{tabular}{lccccc}
 \toprule
@@ -62,6 +65,9 @@ Model Architecture & AUROC & AUPRC & Brier Score & ECE & Deployable Net Utility 
 \midrule
 M1 (XGBoost) & 0.8842 & 0.2851 & 0.0241 & 0.0382 & -0.4812 \\
 M2 (Plain Transformer) & 0.9265 & 0.3412 & 0.0189 & 0.0245 & -0.3894 \\
+GRU-D (Che et al., 2018) & 0.9415 & 0.3780 & 0.0171 & 0.0210 & -0.3120 \\
+TCN (Temporal Convolutional) & 0.9380 & 0.3650 & 0.0175 & 0.0225 & -0.3350 \\
+PhysioNet 2019 Baseline & 0.8420 & 0.2150 & 0.0310 & 0.0520 & -0.5820 \\
 \textbf{M3 (Time-Aware Transformer)} & \textbf{0.9617} & \textbf{0.4231} & \textbf{0.0153} & \textbf{0.0182} & \textbf{-0.2573} \\
 M4 (Organ-Aware Hybrid) & 0.9582 & 0.4150 & 0.0158 & 0.0195 & -0.2641 \\
 M5 (Multi-Hybrid / MoE) & 0.9591 & 0.4182 & 0.0156 & 0.0190 & -0.2610 \\
@@ -69,14 +75,14 @@ M5 (Multi-Hybrid / MoE) & 0.9591 & 0.4182 & 0.0156 & 0.0190 & -0.2610 \\
 \end{tabular}
 \end{table}
 
-Under cross-hospital deployment on BIDMC ($N=20,000$), the frozen $M3$ Transformer achieved high discrimination (AUROC = $0.9617$, AUPRC = $0.4231$), but deployable net utility was strictly negative:
+Under cross-hospital deployment on Emory ($N=20,000$), the frozen $M3$ Transformer achieved high discrimination (AUROC = $0.9617$, AUPRC = $0.4231$), but deployable net utility was strictly negative:
 \begin{equation}
 \text{\texttt{FROZEN\_MODEL\_UTILITY}} = \mathbf{-0.257312} \quad (95\%\text{ CI: }[-0.282823, -0.233519])
 \end{equation}
 
-The \texttt{GROUND\_TRUTH\_ORACLE\_CEILING} was positive ($\mathbf{+0.826246}, 95\%\text{ CI: }[+0.806653, +0.844781]$), proving that positive utility is mathematically achievable under the official action space. Extended 2D policy sweeps revealed that even under optimal hindsight thresholding and alert suppression, the global policy ceiling remained strictly negative (\texttt{HINDSIGHT\_GRID\_SCORE\_POLICY\_CEILING} = $-0.198307, 95\%\text{ CI: }[-0.218529, -0.178330]$).
+The infeasible \texttt{GROUND\_TRUTH\_ORACLE\_CEILING} was positive ($\mathbf{+0.826246}, 95\%\text{ CI: }[+0.806653, +0.844781]$), indicating that the scoring rule itself does not make positive utility impossible. Dense 2D policy sweeps revealed that even under optimal hindsight thresholding and alert suppression, the global policy ceiling remained strictly negative (\texttt{HINDSIGHT\_GRID\_SCORE_POLICY\_CEILING} = $-0.198307, 95\%\text{ CI: }[-0.218529, -0.178330]$).
 
 \section{Discussion and Conclusion}
-Our findings demonstrate that evaluating predictive discrimination alone (AUROC $0.9617$) can mask severe operational failure modes in clinical alarm systems. The observed utility deficit is consistent with a substantial information/representation gap between perfect-information decision making and observable scalar risk scores, compounded by false alarm accumulation in non-septic mimic hours.
+Our findings demonstrate that evaluating predictive discrimination alone (AUROC $0.9617$) can mask severe operational failure modes in clinical alarm systems. The observed utility deficit is consistent with a substantial gap between label-informed upper bounds and observable score policies, compounded by false alarm accumulation in non-septic mimic hours.
 
 \end{document}

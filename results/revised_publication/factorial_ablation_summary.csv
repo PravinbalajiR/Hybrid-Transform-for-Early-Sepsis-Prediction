@@ -1,0 +1,5 @@
+variant,has_values,has_mask,has_delta,auroc_mean,auroc_std,auprc_mean,utility_mean
+Values Only (Baseline),True,False,False,0.9265,0.0022,0.3412,-0.3894
+Mask Contribution,True,True,False,0.942,0.0019,0.3751,-0.315
+Time Delta Contribution,True,False,True,0.948,0.0018,0.3895,-0.298
+Full M3 (Interaction),True,True,True,0.9617,0.0016,0.4231,-0.2573

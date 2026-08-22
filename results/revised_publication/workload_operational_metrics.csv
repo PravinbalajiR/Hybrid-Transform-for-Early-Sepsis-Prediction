@@ -1,0 +1,2 @@
+total_alerts,sepsis_alerts,non_sepsis_alerts,total_patient_days,alerts_per_100_patient_days,alerts_per_patient,false_alerts_per_non_septic_patient,alert_ppv,pct_patients_alerted
+5337,1004,4333,31413.625,16.989443275012036,0.26685,0.22884757578958487,0.18812066704140903,25.855
