@@ -95,3 +95,65 @@ def calculate_cohort_utility(all_labels, all_preds):
         tot_best += b
     norm = tot_ach / tot_best if tot_best > 0 else 0.0
     return tot_ach, tot_best, norm
+
+
+def calculate_per_patient_optimal_hindsight(all_labels, all_probs):
+    """
+    Computes PER_PATIENT_OPTIMAL_HINDSIGHT_CEILING across all patients independently.
+    For each patient, computes the highest achievable utility contribution without imposing
+    any global threshold or global cooldown policy across patients.
+    Returns: (normalized_ceiling, total_achieved, total_best, patient_rows)
+    """
+    patient_rows = []
+    tot_achieved = 0.0
+    tot_best = 0.0
+
+    for idx, (lbls, prs) in enumerate(zip(all_labels, all_probs)):
+        lbls = np.asarray(lbls, dtype=int)
+        prs = np.asarray(prs, dtype=float)
+        T = len(lbls)
+        is_sepsis = int(lbls.max()) == 1
+
+        if not is_sepsis:
+            # Non-septic patient: optimal independent choice is never alarm -> 0.0 utility
+            best_p_ach = 0.0
+            best_p_hour = -1
+            best_p_best = 0.0
+        else:
+            # Septic patient: search over all possible single alarm hours t in {0, ..., T-1} plus no alarm
+            best_p_ach = -2.0  # default no alarm
+            best_p_hour = -1
+            best_p_best = 1.0
+            t_onset = int(np.argmax(lbls))
+
+            # 1. No alarm
+            ach_no, _ = calculate_patient_utility(lbls, np.zeros(T, dtype=int))
+            if ach_no > best_p_ach:
+                best_p_ach = ach_no
+                best_p_hour = -1
+
+            # 2. Test every single hour t as the first alarm time
+            for t_al in range(T):
+                p_test = np.zeros(T, dtype=int)
+                p_test[t_al] = 1
+                ach_t, _ = calculate_patient_utility(lbls, p_test)
+                if ach_t > best_p_ach:
+                    best_p_ach = ach_t
+                    best_p_hour = t_al
+
+        tot_achieved += best_p_ach
+        tot_best += best_p_best
+
+        patient_rows.append({
+            "patient_id": idx,
+            "is_sepsis": int(is_sepsis),
+            "length_hours": T,
+            "onset_hour": int(np.argmax(lbls)) if is_sepsis else -1,
+            "optimal_hour": best_p_hour,
+            "optimal_utility_contribution": best_p_ach,
+            "best_possible_utility": best_p_best
+        })
+
+    norm_ceiling = tot_achieved / tot_best if tot_best > 0 else 0.0
+    return norm_ceiling, tot_achieved, tot_best, pd.DataFrame(patient_rows)
+
