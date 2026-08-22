@@ -97,12 +97,16 @@ def calculate_cohort_utility(all_labels, all_preds):
     return tot_ach, tot_best, norm
 
 
-def calculate_per_patient_optimal_hindsight(all_labels, all_probs):
+def calculate_patient_adaptive_threshold_ceiling(all_labels, all_probs, cooldown_hours=72):
     """
-    Computes PER_PATIENT_OPTIMAL_HINDSIGHT_CEILING across all patients independently.
-    For each patient, computes the highest achievable utility contribution without imposing
-    any global threshold or global cooldown policy across patients.
-    Returns: (normalized_ceiling, total_achieved, total_best, patient_rows)
+    Corrected Score-Based Patient-Adaptive Threshold Ceiling.
+    For each patient independently:
+      - Considers every candidate threshold t derived from y_prob.
+      - An alarm occurs ONLY when y_prob >= t at the FIRST crossing hour (with optional cooldown).
+      - Finds the threshold t_i* (and resulting alarm hour) that maximizes THIS PATIENT'S utility.
+      - Non-septic patients choose a threshold above max(y_prob) -> 'never alarm' (0.0 utility).
+      - Septic patients test all candidate thresholds that trigger an alarm at a REAL probability crossing.
+    Returns: (normalized_ceiling, total_achieved, total_best, patient_rows_df)
     """
     patient_rows = []
     tot_achieved = 0.0
@@ -115,45 +119,69 @@ def calculate_per_patient_optimal_hindsight(all_labels, all_probs):
         is_sepsis = int(lbls.max()) == 1
 
         if not is_sepsis:
-            # Non-septic patient: optimal independent choice is never alarm -> 0.0 utility
-            best_p_ach = 0.0
-            best_p_hour = -1
-            best_p_best = 0.0
+            # Non-septic patient: optimal threshold is above max(prs) -> never alarm -> 0.0 utility
+            best_ach = 0.0
+            best_th = 1.01
+            best_alarm_hour = -1
+            prob_at_alarm = 0.0
+            best_possible = 0.0
         else:
-            # Septic patient: search over all possible single alarm hours t in {0, ..., T-1} plus no alarm
-            best_p_ach = -2.0  # default no alarm
-            best_p_hour = -1
-            best_p_best = 1.0
+            best_possible = 1.0
             t_onset = int(np.argmax(lbls))
 
-            # 1. No alarm
-            ach_no, _ = calculate_patient_utility(lbls, np.zeros(T, dtype=int))
-            if ach_no > best_p_ach:
-                best_p_ach = ach_no
-                best_p_hour = -1
+            # Default: never alarm (missed sepsis = -2.0)
+            best_ach, _ = calculate_patient_utility(lbls, np.zeros(T, dtype=int))
+            best_th = 1.01
+            best_alarm_hour = -1
+            prob_at_alarm = 0.0
 
-            # 2. Test every single hour t as the first alarm time
-            for t_al in range(T):
-                p_test = np.zeros(T, dtype=int)
-                p_test[t_al] = 1
-                ach_t, _ = calculate_patient_utility(lbls, p_test)
-                if ach_t > best_p_ach:
-                    best_p_ach = ach_t
-                    best_p_hour = t_al
+            # Candidate thresholds: all unique non-zero probabilities in prs, plus grid values
+            candidate_thresholds = np.unique(np.concatenate([prs, np.linspace(0.001, 0.999, 200)]))
+            candidate_thresholds = np.sort(candidate_thresholds)[::-1]  # high to low
 
-        tot_achieved += best_p_ach
-        tot_best += best_p_best
+            for th in candidate_thresholds:
+                alarm_indices = np.where(prs >= th)[0]
+                if len(alarm_indices) == 0:
+                    continue
+
+                t_first = alarm_indices[0]
+                preds = np.zeros(T, dtype=int)
+                
+                if cooldown_hours is None or cooldown_hours == 0:
+                    preds[t_first] = 1
+                else:
+                    # Apply cooldown alert suppression from t_first
+                    curr_t = t_first
+                    while curr_t < T:
+                        if prs[curr_t] >= th:
+                            preds[curr_t] = 1
+                            curr_t += cooldown_hours
+                        else:
+                            curr_t += 1
+
+                ach, _ = calculate_patient_utility(lbls, preds)
+                if ach > best_ach:
+                    best_ach = ach
+                    best_th = float(th)
+                    best_alarm_hour = int(t_first)
+                    prob_at_alarm = float(prs[t_first])
+
+        tot_achieved += best_ach
+        tot_best += best_possible
 
         patient_rows.append({
             "patient_id": idx,
             "is_sepsis": int(is_sepsis),
             "length_hours": T,
             "onset_hour": int(np.argmax(lbls)) if is_sepsis else -1,
-            "optimal_hour": best_p_hour,
-            "optimal_utility_contribution": best_p_ach,
-            "best_possible_utility": best_p_best
+            "optimal_threshold": best_th,
+            "first_alarm_hour": best_alarm_hour,
+            "prob_at_alarm": prob_at_alarm,
+            "optimal_utility_contribution": best_ach,
+            "best_possible_utility": best_possible
         })
 
     norm_ceiling = tot_achieved / tot_best if tot_best > 0 else 0.0
     return norm_ceiling, tot_achieved, tot_best, pd.DataFrame(patient_rows)
+
 
