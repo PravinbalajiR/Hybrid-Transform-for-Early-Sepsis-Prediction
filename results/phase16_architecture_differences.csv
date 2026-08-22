@@ -1,0 +1,21 @@
+model_A,model_B,parameter_name,shape_A,shape_B,reason
+M3Phase16_A,M3Phase16_D,encoder.0.weight,"(64, 8)","(64, 4)",shape_mismatch
+M3Phase16_A,M3Phase16_E,encoder.0.weight,"(64, 8)","(64, 4)",shape_mismatch
+M3Phase16_A,M3Phase16_G,encoder.0.weight,"(64, 8)","(64, 4)",shape_mismatch
+M3Phase16_A,M3Phase16_I,encoder.0.weight,"(64, 8)","(64, 4)",shape_mismatch
+M3Phase16_B,M3Phase16_D,encoder.0.weight,"(64, 8)","(64, 4)",shape_mismatch
+M3Phase16_B,M3Phase16_E,encoder.0.weight,"(64, 8)","(64, 4)",shape_mismatch
+M3Phase16_B,M3Phase16_G,encoder.0.weight,"(64, 8)","(64, 4)",shape_mismatch
+M3Phase16_B,M3Phase16_I,encoder.0.weight,"(64, 8)","(64, 4)",shape_mismatch
+M3Phase16_C,M3Phase16_D,encoder.0.weight,"(64, 8)","(64, 4)",shape_mismatch
+M3Phase16_C,M3Phase16_E,encoder.0.weight,"(64, 8)","(64, 4)",shape_mismatch
+M3Phase16_C,M3Phase16_G,encoder.0.weight,"(64, 8)","(64, 4)",shape_mismatch
+M3Phase16_C,M3Phase16_I,encoder.0.weight,"(64, 8)","(64, 4)",shape_mismatch
+M3Phase16_D,M3Phase16_F,encoder.0.weight,"(64, 4)","(64, 8)",shape_mismatch
+M3Phase16_D,M3Phase16_H,encoder.0.weight,"(64, 4)","(64, 8)",shape_mismatch
+M3Phase16_E,M3Phase16_F,encoder.0.weight,"(64, 4)","(64, 8)",shape_mismatch
+M3Phase16_E,M3Phase16_H,encoder.0.weight,"(64, 4)","(64, 8)",shape_mismatch
+M3Phase16_F,M3Phase16_G,encoder.0.weight,"(64, 8)","(64, 4)",shape_mismatch
+M3Phase16_F,M3Phase16_I,encoder.0.weight,"(64, 8)","(64, 4)",shape_mismatch
+M3Phase16_G,M3Phase16_H,encoder.0.weight,"(64, 4)","(64, 8)",shape_mismatch
+M3Phase16_H,M3Phase16_I,encoder.0.weight,"(64, 8)","(64, 4)",shape_mismatch

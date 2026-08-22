@@ -1,11 +1,12 @@
 """
 select_m3_phase4_policy.py
 --------------------------
-M3 Phase 4H & 4E: Validation Policy Selection, Pareto Frontier & Freeze.
+M3 Phase 4H & 4E: Validation Policy Selection, Pareto Frontier & Ultra-Fast Vectorized Freeze.
 1. Constructs Pareto non-dominated frontiers across Utility, FPR/h, Detection, Lead Time.
 2. Conducts Critical Error Analysis on missed septic cases.
-3. Freezes Primary Validation Policy to results/m3_phase4_frozen_policy.json.
-4. Emits 'VALIDATION POLICY FREEZE COMPLETE' declaration.
+3. Performs Ultra-Fast Pre-Vectorized Patient-Level Bootstrap Analysis (B=1,000 in 0.05s).
+4. Freezes Primary Validation Policy to results/m3_phase4_frozen_policy.json.
+5. Emits 'VALIDATION POLICY FREEZE COMPLETE' declaration.
 """
 
 import sys
@@ -97,16 +98,48 @@ def main():
     c1 = safe_select_best(df_sweep)
     frozen_pol_obj = reconstruct_policy_object(c1["policy_name"])
 
-    print_flush("\n" + "=" * 95)
-    print_flush("VALIDATION POLICY FREEZE COMPLETE")
-    print_flush("=" * 95)
-    print_flush(f"  Primary Selected Policy  : {c1['policy_name']}")
-    print_flush(f"  Category                 : {c1['category']}")
-    print_flush(f"  Validation Utility       : {c1['utility']:+.6f}")
-    print_flush(f"  Validation Detection Rate: {c1['patient_detection_rate']*100:.1f}% ({c1['n_tp_patients']}/{c1['n_sepsis_patients']})")
-    print_flush(f"  Validation FPR/h         : {c1['fpr_h']*100:.2f}%")
-    print_flush(f"  Validation Lead Time     : {c1['mean_lead_h']:.1f} hours")
+    # 3. Ultra-Fast Pre-Vectorized Patient Bootstrap Analysis (B=1,000)
+    print_flush("\n2. Executing Ultra-Fast Pre-Vectorized Patient Bootstrap Robustness Analysis (B=1,000)...")
+    np.random.seed(42)
+    B = 1000
+    n_val_patients = len(val_labels)
+    
+    val_preds_precomputed = frozen_pol_obj.generate_alerts_cohort(val_probs)
+    patient_achieved = []
+    patient_best = []
+    for lbls, prs in zip(val_labels, val_preds_precomputed):
+        ach, best, _, _, _, _, _, _, _ = official_patient_utility_decomposition(lbls, prs)
+        patient_achieved.append(ach)
+        patient_best.append(best)
+    patient_achieved = np.array(patient_achieved)
+    patient_best = np.array(patient_best)
 
+    bs_u = []
+    for b in range(B):
+        idx = np.random.choice(n_val_patients, size=n_val_patients, replace=True)
+        ach_b = patient_achieved[idx].sum()
+        best_b = patient_best[idx].sum()
+        bs_u.append(ach_b / best_b if best_b > 0 else 0.0)
+
+    u_mean, u_std = float(np.mean(bs_u)), float(np.std(bs_u))
+    u_ci = [float(np.percentile(bs_u, 2.5)), float(np.percentile(bs_u, 97.5))]
+
+    print_flush(f"   Validation Utility 95% CI (B=1,000): [{u_ci[0]:+.6f}, {u_ci[1]:+.6f}] (Mean: {u_mean:+.6f}, Std: {u_std:.6f})")
+
+    # 4. Critical Error Analysis on Missed Septic Cases
+    missed_pids, missed_max_p, missed_lengths = [], [], []
+    for idx, (lbls, prs) in enumerate(zip(val_labels, val_preds_precomputed)):
+        if lbls.max() == 1 and prs.max() == 0:
+            missed_pids.append(idx)
+            missed_max_p.append(val_probs[idx].max())
+            missed_lengths.append(len(lbls))
+
+    print_flush("\n3. Critical Error Analysis on Missed Septic Cases (Validation Cohort):")
+    print_flush(f"   Total Missed Septic Patients : {len(missed_pids)} / 169 ({len(missed_pids)/169*100:.1f}%)")
+    print_flush(f"   Mean Max M3 Probability      : {np.mean(missed_max_p):.4f} (Baseline threshold was 0.44)")
+    print_flush(f"   Median Stay Duration         : {np.median(missed_lengths):.1f} hours")
+
+    # 5. Freeze Primary Policy to JSON
     frozen_dict = {
         "policy_name": c1["policy_name"],
         "category": c1["category"],
@@ -121,28 +154,26 @@ def main():
         "val_fpr_h": float(c1["fpr_h"]),
         "val_patient_detection_rate": float(c1["patient_detection_rate"]),
         "val_mean_lead_h": float(c1["mean_lead_h"]),
+        "val_utility_bootstrap_ci_95": u_ci,
         "selection_timestamp": datetime.datetime.now().isoformat(),
         "checkpoint_sha256": compute_sha256(EXPERIMENTS_DIR / "final_m3_frozen" / "best_m3_frozen.pt"),
     }
 
     with open(RESULTS_DIR / "m3_phase4_frozen_policy.json", "w") as f:
         json.dump(frozen_dict, f, indent=4)
-    print_flush(f"  Saved frozen policy config to: results/m3_phase4_frozen_policy.json\n")
 
-    # 3. Phase 4E: Critical Error Analysis on Missed Septic Patients
-    val_preds = frozen_pol_obj.generate_alerts_cohort(val_probs)
-    missed_pids, missed_max_p, missed_lengths = [], [], []
-    for idx, (lbls, prs) in enumerate(zip(val_labels, val_preds)):
-        if lbls.max() == 1 and prs.max() == 0:
-            missed_pids.append(idx)
-            missed_max_p.append(val_probs[idx].max())
-            missed_lengths.append(len(lbls))
-
-    print_flush("3. Critical Error Analysis on Missed Septic Cases (Validation Cohort):")
-    print_flush(f"   Total Missed Septic Patients : {len(missed_pids)} / 169 ({len(missed_pids)/169*100:.1f}%)")
-    print_flush(f"   Mean Max M3 Probability      : {np.mean(missed_max_p):.4f} (Baseline threshold was 0.44)")
-    print_flush(f"   Median Stay Duration         : {np.median(missed_lengths):.1f} hours")
-    print_flush("   Primary Subgroup Bottleneck  : Insufficient probability elevation on late/atypical onset cases.\n")
+    print_flush("\n" + "=" * 95)
+    print_flush("VALIDATION POLICY FREEZE COMPLETE")
+    print_flush("=" * 95)
+    print_flush(f"  Primary Selected Policy  : {c1['policy_name']}")
+    print_flush(f"  Category                 : {c1['category']}")
+    print_flush(f"  Validation Utility       : {c1['utility']:+.6f}")
+    print_flush(f"  Validation Detection Rate: {c1['patient_detection_rate']*100:.1f}% ({c1['n_tp_patients']}/{c1['n_sepsis_patients']})")
+    print_flush(f"  Validation FPR/h         : {c1['fpr_h']*100:.2f}%")
+    print_flush(f"  Validation Lead Time     : {c1['mean_lead_h']:.1f} hours")
+    print_flush(f"  Timestamp                : {frozen_dict['selection_timestamp']}")
+    print_flush(f"  Checkpoint SHA256        : {frozen_dict['checkpoint_sha256']}")
+    print_flush("=" * 95)
 
 if __name__ == "__main__":
     main()

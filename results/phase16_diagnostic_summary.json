@@ -1,0 +1,13 @@
+{
+    "scientific_classification": "REPRESENTATION_NOT_IMPROVED",
+    "reasoning": "Cross-hospital feature shift and score overlap persist; BIDMC oracle utility did not improve.",
+    "phase15_oracle_baseline": -0.234579,
+    "best_phase16_oracle_utility": -0.23518344798835233,
+    "oracle_delta": -0.0006044479883523246,
+    "official_scorer_diff": 0.0,
+    "bootstrap_mean_utility": -1.2691276367543007,
+    "bootstrap_95_ci": [
+        -1.3574466449351628,
+        -1.1862867323980115
+    ]
+}

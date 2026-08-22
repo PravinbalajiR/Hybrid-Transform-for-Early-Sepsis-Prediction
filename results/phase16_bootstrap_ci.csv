@@ -1,0 +1,2 @@
+policy_name,bootstrap_replicates,test_utility_mean,test_utility_std,test_utility_ci_95_low,test_utility_ci_95_high
+M3Phase16_E,1000,-1.2691276367543007,0.0450432554769592,-1.3574466449351628,-1.1862867323980115
