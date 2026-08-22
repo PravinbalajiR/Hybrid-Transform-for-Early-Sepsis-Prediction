@@ -1,0 +1,7 @@
+Metric,Value
+BIDMC Test AUROC,0.961663234029513
+BIDMC Test AUPRC,0.42306158603253274
+BIDMC Brier Score,0.021326355636119843
+Ground-Truth Oracle Utility Ceiling,0.826245570148012
+Observable-Score Oracle Utility Ceiling,-0.8555451323744002
+Current Model Utility,-2.054591411298728

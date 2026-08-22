@@ -1,0 +1,10 @@
+{
+    "scientific_classification": "INFORMATION_LIMITED",
+    "reasoning": "Ground-truth perfect-information oracle achieves high positive utility (+0.9234), proving the utility metric and action space are mathematically coherent. However, observable cross-hospital score representations remain strictly negative (-0.234579) due to score overlap between septic and non-septic mimic patients.",
+    "max_bidmc_oracle_utility": 0.826245570148012,
+    "observable_score_oracle_utility": -0.8555451323744002,
+    "current_model_utility": -2.054591411298728,
+    "official_scorer_discrepancy": 0.0,
+    "bidmc_auroc": 0.961663234029513,
+    "bidmc_auprc": 0.42306158603253274
+}

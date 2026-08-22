@@ -1,0 +1,12 @@
+{
+    "final_classification": "INFORMATION_LIMITED",
+    "max_bidmc_oracle_utility": 0.826245570148012,
+    "observable_score_oracle_utility": -0.8555451323744002,
+    "current_model_utility": -2.054591411298728,
+    "oracle_model_gap": 2.88083698144674,
+    "indomain_oracle_utility": 0.8994082840236685,
+    "crossdomain_oracle_utility": 0.826245570148012,
+    "feasible_positive_utility": true,
+    "recommended_next_action": "STOP ALL NEURAL MODEL RETRAINING. Reframe the paper's scientific contribution around cross-hospital score-separability limits and temporal risk representation boundaries.",
+    "mandatory_stopping_rule_triggered": true
+}

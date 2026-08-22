@@ -1,0 +1,4 @@
+Framework,Year,Oracle_Utility,AUROC
+Phase 15 Policy Sweep Baseline,2026,-0.234579,0.9617
+Phase 16 Retrained DANN Baseline,2026,-0.235183,0.9617
+Phase 17 Perfect-Information Oracle,2026,0.826245570148012,1.0
