@@ -69,14 +69,14 @@ M5 (Multi-Hybrid / MoE) & 0.9591 & 0.4182 & 0.0156 & 0.0190 & --- \\
 \end{table}
 \textit{Note: --- indicates baseline models for which raw hourly prediction arrays were not preserved, preventing independent recomputation under the official PhysioNet 2019 utility evaluator without re-training.}
 
-Under cross-hospital deployment on Emory ($N=20,000$), the frozen $M3$ Transformer achieved high discrimination (AUROC = $0.961726$, AUPRC = $0.423114$) and an official normalized utility of:
+Under cross-hospital deployment on Emory ($N=20,000$), the frozen $M3$ Transformer achieved a raw observed utility $U_{\text{obs}} = 1,515.6500$ points, an inaction reference utility $U_{\text{inact}} = -9,512.4444$ points, an oracle best utility $U_{\text{best}} = 7,298.7778$ points, and an official normalized utility of:
 \begin{equation}
 U_{\text{official}} = \mathbf{+0.655944} \quad (95\%\text{ CI: }[+0.6310, +0.6800])
 \end{equation}
 
 Among the evaluated thresholds in the sensitivity analysis, the prespecified validation threshold of 0.190 achieved the highest observed official utility on the independent Emory test cohort.
 
-Operational workload auditing revealed $5,337$ total alerts ($1,004$ true positive alerts, $4,333$ false positive alerts), an alert PPV of $18.81\%$, and an operational alert frequency of $16.99$ alerts per $100$ patient-days.
+Operational workload auditing revealed $5,337$ total alerts ($1,004$ true positive alerts, $4,333$ false positive alerts), an alert PPV of $18.81\%$, an operational alert frequency of $16.99$ alerts per $100$ patient-days, and a patient alert coverage of $25.86\%$ ($5,172$ out of $20,000$ ICU stays).
 
 The ground-truth oracle ceiling ($+1.000000$, $7,298.78$ pts) represents an infeasible label-informed mathematical reference bound under perfect future knowledge.
 
