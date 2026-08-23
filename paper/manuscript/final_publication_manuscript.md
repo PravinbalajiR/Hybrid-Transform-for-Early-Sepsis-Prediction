@@ -1,4 +1,4 @@
-# A Time-Aware Transformer for Cross-Hospital Sepsis Early Warning: From Discriminative Performance to Decision Utility and Alert Burden
+# A Time-Aware Transformer for Cross-Hospital Sepsis Early Warning: Linking Discrimination, Decision Utility, and Alert Burden
 
 ## ABSTRACT
 
@@ -50,7 +50,7 @@ Early automated sepsis detection relied on rule-based clinical criteria—such a
 ICU data are characterized by irregular measurement intervals and informative missingness patterns. Che et al. (2018) introduced GRU-D, showing that incorporating binary observation masks and elapsed time deltas ($\Delta t$) allows neural networks to capture clinical sampling frequencies. Subsequent studies confirmed that modeling observation dynamics improves risk prediction in acute care time series.
 
 ### 2.3 Transformer-Based Clinical Time-Series Models
-Self-attention mechanisms have been adapted for clinical time series to capture long-range temporal dependencies without recurrent bottlenecking (Li et al., 2020). By integrating time-aware positional embeddings and missingness encodings, Time-Aware Transformers achieve state-of-the-art rank-ordering performance (AUROC $>0.95$) on competitive benchmarks.
+Self-attention mechanisms have been adapted for clinical time series to capture long-range temporal dependencies without recurrent bottlenecking (Li et al., 2020). By integrating time-aware positional embeddings and missingness encodings, Time-Aware Transformers achieve strong rank-ordering performance (AUROC $>0.95$) on competitive benchmarks.
 
 ### 2.4 Cross-Hospital Generalization and Domain Shift
 Dataset shift represents a major barrier to deploying clinical machine learning models (Subbaswamy & Saria, 2020). Differences in patient demographics, disease prevalence, nursing measurement frequencies, and hospital coding practices frequently cause model performance to degrade when transferred to new medical centers.
@@ -184,7 +184,7 @@ Multi-seed evaluation across $N=6$ random initialization seeds confirmed high st
 ## 5. DISCUSSION
 
 ### 5.1 Principal Findings
-This study evaluated a structured progression of deep learning architectures for early sepsis prediction across hospital systems. Our primary finding is that a compact Time-Aware Transformer ($M3$) achieves state-of-the-art cross-hospital discrimination ($0.961726$) and positive net utility ($+0.655944$) under official PhysioNet 2019 challenge evaluation on an independent external test cohort of $20,000$ ICU stays.
+This study evaluated a structured progression of deep learning architectures for early sepsis prediction across hospital systems. Our primary finding is that a compact Time-Aware Transformer ($M3$) achieves the strongest evaluated cross-hospital discrimination ($0.961726$) and positive net utility ($+0.655944$) under official PhysioNet 2019 challenge evaluation on an independent external test cohort of $20,000$ ICU stays.
 
 ### 5.2 Why Positive Utility Matters under Challenge Metrics
 In temporal clinical early warning, high discriminative rank-ordering (AUROC) does not guarantee that a binary decision policy will generate clinical benefit when false alarms are penalized. The positive official utility score ($+0.655944$) demonstrates that $M3$'s alerting policy successfully balances early detection rewards ($[t_{\text{sepsis}}-12\text{h}, t_{\text{sepsis}}-6\text{h}]$) against false positive penalties ($-0.05$ pts/hour), outperforming inaction ($0.0$).
