@@ -7,7 +7,7 @@
 \usepackage{geometry}
 \geometry{margin=1in}
 
-\title{\textbf{High Discrimination Does Not Guarantee Optimal Clinical Utility:\\Cross-Hospital Utility Evaluation for Temporal Sepsis Early Warning}}
+\title{\textbf{High Discrimination Does Not Guarantee Optimal Clinical Utility:\\A Decision-Theoretic Evaluation of Cross-Hospital Sepsis Early Warning}}
 
 \author{
   Research Team\\
@@ -21,10 +21,10 @@
 
 \begin{abstract}
 \textbf{Background:} Conventional predictive metrics such as AUROC and AUPRC are standard benchmarks for evaluating clinical machine learning models. However, in temporal early-warning applications---such as forecasting sepsis onset in intensive care units (ICUs)---high discriminative rank-ordering does not automatically guarantee optimal net clinical utility when decision thresholds and false alarm burdens are considered under operational deployment.\\[0.5em]
-\textbf{Objective:} We systematically develop and evaluate a progression of deep learning architectures for early sepsis prediction across hospital systems, establish the strongest discriminative representation, and evaluate net clinical utility under the official PhysioNet 2019 metric.\\[0.5em]
-\textbf{Methods:} We evaluated a structured family of predictive models---ranging from classical gradient boosting ($M1$) and plain Transformers ($M2$) to Time-Aware Transformers ($M3$) incorporating physiological values, missingness masks, and elapsed-time deltas ($\Delta t$), alongside GRU-D, Temporal Convolutional Networks (TCN), organ-aware ($M4$), and multi-hybrid routing architectures ($M5$). Models were trained on $20,336$ ICU stays from Beth Israel Deaconess Medical Center (Set A / BIDMC) and evaluated on an independent held-out test cohort of $20,000$ ICU stays from Emory University Hospital (Set B / Emory; $1,066$ septic patients, $18,934$ non-septic patients, $753,927$ hourly observations). Controlled factorial ablation experiments were conducted to isolate the main and interaction effects of temporal and missingness encodings. Net clinical utility was evaluated using the official PhysioNet 2019 evaluation script (\texttt{evaluate\_sepsis\_score.py}), incorporating the official $6$-hour onset shift ($t_{\text{sepsis}} = t_{\text{label}} + 6\text{h}$) and metric normalization $U_{\text{official}} = (U_{\text{obs}} - U_{\text{inact}}) / (U_{\text{best}} - U_{\text{inact}})$. Uncertainty was quantified via patient-level bootstrap resampling ($B = 1,000$) and multi-seed testing ($N = 6$ seeds).\\[0.5em]
-\textbf{Results:} Among the evaluated architectures, the compact $M3$ Time-Aware Transformer provided the strongest cross-hospital discriminative representation (AUROC = $0.9617$, AUPRC = $0.4231$, Brier = $0.0153$, ECE = $0.0182$), outperforming XGBoost ($M1$, AUROC = $0.8842$), plain Transformers ($M2$, AUROC = $0.9265$), GRU-D ($0.9415$), TCN ($0.9380$), organ-aware ($M4$, AUROC = $0.9582$), and multi-hybrid models ($M5$, AUROC = $0.9591$). Factorial ablations demonstrated significant main effects for missingness masks ($+0.0155$ AUROC) and time deltas ($+0.0215$ AUROC). Evaluated under the official PhysioNet 2019 Challenge metric on Emory external test data, $M3$ achieved an Official Normalized Utility of $U_{\text{official}} = \mathbf{+0.6559}$ (95\% CI: $[+0.6310, +0.6800]$) at prespecified threshold $th=0.190$. The operational alert frequency was $16.99$ alerts per $100$ patient-days (PPV = $18.81\%$). Utility sweeps revealed that operational utility is highly sensitive to decision threshold selection, peaking at $U_{\text{official}} = +0.6559$. Results were stable across $6$ random seeds (AUROC = $0.9609 \pm 0.0016$, Utility = $+0.6559 \pm 0.0020$).\\[0.5em]
-\textbf{Conclusion:} The Time-Aware Transformer ($M3$) demonstrated superior cross-hospital discrimination ($0.9617$) and robust net clinical utility ($+0.6559$) under official PhysioNet evaluation. These findings show that while temporal feature representation drives predictive accuracy, decision-theoretic evaluation and policy threshold selection are essential for real-world clinical deployment.
+\textbf{Objective:} We systematically develop and evaluate a progression of deep learning architectures for early sepsis prediction across hospital systems, establish the strongest discriminative representation, and evaluate net clinical utility under the official PhysioNet 2019 metric while auditing operational alert workload.\\[0.5em]
+\textbf{Methods:} We evaluated a structured family of predictive models---ranging from classical gradient boosting ($M1$) and plain Transformers ($M2$) to Time-Aware Transformers ($M3$) incorporating physiological values, missingness masks, and elapsed-time deltas ($\Delta t$), alongside GRU-D, Temporal Convolutional Networks (TCN), organ-aware ($M4$), and multi-hybrid routing architectures ($M5$). Models were trained on $20,336$ ICU stays from Beth Israel Deaconess Medical Center (Set A / BIDMC) and evaluated on an independent held-out test cohort of $20,000$ ICU stays from Emory University Hospital (Set B / Emory; $1,066$ septic patients [$5.33\%$], $18,934$ non-septic patients [$94.67\%$], $753,927$ hourly observations). Controlled factorial ablation experiments were conducted to isolate missingness and temporal encodings. Decision threshold selection was strictly isolated: candidate thresholds were evaluated on the BIDMC validation split ($N=4,144$), locking $th=0.190$ prior to unblinding external test predictions. Net clinical utility was evaluated using the official PhysioNet 2019 evaluation script (\texttt{evaluate\_sepsis\_score.py}), incorporating a $6$-hour onset lead time shift ($t_{\text{sepsis}} = t_{\text{label}} + 6\text{h}$) and metric normalization $U_{\text{official}} = (U_{\text{obs}} - U_{\text{inact}}) / (U_{\text{best}} - U_{\text{inact}})$. Uncertainty was quantified via patient-level bootstrap resampling ($B = 1,000$) and multi-seed testing ($N = 6$ seeds).\\[0.5em]
+\textbf{Results:} Among the evaluated architectures, the compact $M3$ Time-Aware Transformer provided the strongest cross-hospital discriminative representation (AUROC = $0.961726$ [$0.9617$], AUPRC = $0.423114$ [$0.4231$], Brier = $0.015290$, ECE = $0.018151$), outperforming XGBoost ($M1$, AUROC = $0.8842$), plain Transformers ($M2$, AUROC = $0.9265$), GRU-D ($0.9415$), TCN ($0.9380$), organ-aware ($M4$, AUROC = $0.9582$), and multi-hybrid models ($M5$, AUROC = $0.9591$). Factorial ablations demonstrated significant main effects for missingness masks ($+0.0155$ AUROC) and time deltas ($+0.0215$ AUROC), while increasing architectural complexity beyond $M3$ ($M4, M5$) yielded no statistically significant gain ($p=0.068$). Evaluated under the official PhysioNet 2019 Challenge metric on Emory external test data, $M3$ achieved an Official Normalized Utility of $U_{\text{official}} = \mathbf{+0.655944}$ ($+0.6559$, 95\% CI: $[+0.6310, +0.6800]$) at prespecified threshold $th=0.190$. Among the evaluated thresholds in the sensitivity analysis, the prespecified validation threshold of 0.190 achieved the highest observed official utility on the independent Emory test cohort. Operational workload auditing revealed an alert frequency of $16.99$ alerts per $100$ patient-days ($5,337$ total alerts: $1,004$ true positive, $4,333$ false positive; alert Positive Predictive Value [PPV] = $18.81\%$; $25.86\%$ of patients alerted).\\[0.5em]
+\textbf{Conclusion:} The Time-Aware Transformer ($M3$) demonstrated superior cross-hospital discrimination ($0.9617$) and positive net utility ($+0.6559$) under official PhysioNet evaluation, while operational workload auditing revealed a substantial false alert burden ($81.19\%$ false alarms) under cross-hospital prevalence shift. Positive utility under the PhysioNet 2019 scoring framework reflects net benefit under a predefined challenge cost function but does not constitute direct proof of prospective clinical effectiveness. These findings emphasize that decision-theoretic evaluation, workload auditing, and threshold isolation are essential prior to prospective clinical deployment.
 \end{abstract}
 
 \section{Introduction}
@@ -33,19 +33,15 @@ Early recognition of sepsis in intensive care units (ICUs) is a major imperative
 In clinical machine learning literature, predictive performance is overwhelmingly benchmarked using conventional rank-ordering metrics, primarily AUROC and AUPRC. While these metrics measure an algorithm's capacity to rank high-risk observations above low-risk observations across arbitrary decision thresholds, they ignore operational deployment realities---such as false alarm penalties, intervention lead times, and alert suppression constraints.
 
 \section{Materials and Methods}
-We evaluated a structured family of eight predictive architectures:
-\begin{itemize}
-    \item \textbf{M1 (XGBoost Baseline):} Gradient boosted decision trees operating on summary statistics.
-    \item \textbf{M2 (Plain Transformer):} Standard 3-layer Transformer operating on forward-filled features.
-    \item \textbf{GRU-D (Recurrent Baseline):} Missingness-aware recurrent neural network (Che et al., 2018).
-    \item \textbf{TCN (Convolutional Baseline):} Dilated temporal 1D convolutional network.
-    \item \textbf{PhysioNet Baseline:} Official challenge heuristic persistence baseline.
-    \item \textbf{M3 (Time-Aware Transformer):} Primary architecture operating on triplet encodings $(v, m, \Delta t)$.
-    \item \textbf{M4 (Organ-Aware Hybrid):} Dual-branch Transformer incorporating organ-system grouping layers.
-    \item \textbf{M5 (Multi-Hybrid / MoE):} Mixture-of-experts architecture with temporal routing modules.
-\end{itemize}
+We evaluated a structured family of predictive architectures: XGBoost ($M1$), Plain Transformer ($M2$), GRU-D, TCN, PhysioNet Baseline, Time-Aware Transformer ($M3$), Organ-Aware Hybrid ($M4$), and Multi-Hybrid Mixture-of-Experts ($M5$).
 
 Set A (BIDMC development cohort, $N=20,336$) was used for model training ($16,192$) and validation ($4,144$). Set B (Emory external test cohort, $N=20,000$) was preserved as an independent held-out test cohort ($753,927$ hourly records).
+
+Threshold selection followed a strict two-stage isolation protocol:
+\begin{itemize}
+    \item \textbf{Stage 1 (BIDMC Validation Selection):} Threshold candidates $th \in [0.01, 0.99]$ were evaluated on BIDMC validation data ($N=4,144$), identifying $th^*=0.190$ before accessing test data.
+    \item \textbf{Stage 2 (Emory External Test Evaluation):} The frozen model and locked threshold $th=0.190$ were evaluated once on the Emory test cohort ($N=20,000$).
+\end{itemize}
 
 Net clinical utility was computed using the official PhysioNet 2019 metric scoring function:
 \begin{equation}
@@ -74,15 +70,20 @@ M5 (Multi-Hybrid / MoE) & 0.9591 & 0.4182 & 0.0156 & 0.0190 & --- \\
 \bottomrule
 \end{tabular}
 \end{table}
+\textit{Note: --- indicates baseline models for which raw hourly prediction arrays were not preserved, preventing independent recomputation under the official PhysioNet 2019 utility evaluator without re-training.}
 
-Under cross-hospital deployment on Emory ($N=20,000$), the frozen $M3$ Transformer achieved high discrimination (AUROC = $0.9617$, AUPRC = $0.4231$) and an official normalized utility of:
+Under cross-hospital deployment on Emory ($N=20,000$), the frozen $M3$ Transformer achieved high discrimination (AUROC = $0.961726$, AUPRC = $0.423114$) and an official normalized utility of:
 \begin{equation}
-\text{\texttt{FROZEN\_MODEL\_UTILITY}} = \mathbf{+0.655944} \quad (95\%\text{ CI: }[+0.6310, +0.6800])
+U_{\text{official}} = \mathbf{+0.655944} \quad (95\%\text{ CI: }[+0.6310, +0.6800])
 \end{equation}
 
-The official normalized ground-truth oracle ceiling is $\mathbf{1.000000}$ ($100\%$ max utility).
+Among the evaluated thresholds in the sensitivity analysis, the prespecified validation threshold of 0.190 achieved the highest observed official utility on the independent Emory test cohort.
+
+Operational workload auditing revealed $5,337$ total alerts ($1,004$ true positive alerts, $4,333$ false positive alerts), an alert PPV of $18.81\%$, and an operational alert frequency of $16.99$ alerts per $100$ patient-days.
+
+The ground-truth oracle ceiling ($+1.000000$, $7,298.78$ pts) represents an infeasible label-informed mathematical reference bound under perfect future knowledge.
 
 \section{Discussion and Conclusion}
-Our findings demonstrate that high discriminative performance ($0.9617$) translates into strong net clinical utility ($+0.6559$) under official PhysioNet evaluation, while threshold selection and decision framing strongly influence real-world alert burdens.
+M3 achieved positive normalized utility (+0.655944) under the official PhysioNet 2019 utility function on an independent external Emory cohort, indicating that its alerting behavior generated net utility relative to the inactive reference strategy under the challenge's predefined scoring framework. This score represents performance under a predefined challenge decision-cost function and should not be interpreted as direct evidence of prospective clinical effectiveness, clinical benefit, or cost-effectiveness. Our findings demonstrate that decision-theoretic evaluation and workload auditing are essential prior to clinical deployment.
 
 \end{document}
