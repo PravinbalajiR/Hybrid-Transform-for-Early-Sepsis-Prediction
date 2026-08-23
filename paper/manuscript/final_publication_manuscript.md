@@ -31,13 +31,13 @@ In this study, we address two interconnected research challenges: first, identif
 - **RQ4:** How sensitive is deployable clinical utility to policy threshold selection, domain prevalence shifts, and operational workload constraints?
 
 ### 1.2 Contributions
-To answer these questions, we present a unified empirical study spanning model development, controlled component ablations, cross-hospital evaluation, operational workload analysis, and official utility evaluation. Our main contributions are:
+To answer these questions, we present a unified empirical study spanning model development, controlled component ablations, cross-hospital evaluation, operational workload analysis, and official utility evaluation (Figure 1). Our main contributions are:
 
-1. **Controlled Model Progression ($M1$–$M5$):** We systematically benchmark a structured family of models on $40,336$ ICU stays across two health systems, establishing that a compact Time-Aware Transformer ($M3$) provides the strongest cross-hospital discriminative representation (AUROC = $0.9617$), outperforming XGBoost ($M1$), plain Transformers ($M2$), and complex hybrid architectures ($M4$, $M5$).
-2. **Factorial Ablation & Saturation Analysis:** We isolate the main and interaction effects of temporal time-deltas ($\Delta t$) and missingness masks ($m$), proving that explicitly representing clinical observation dynamics drives discriminative gains, while demonstrating that further architectural over-parameterization ($M4, M5$) yields no significant improvement ($p=0.068$).
-3. **Official PhysioNet 2019 Utility Evaluation:** We evaluate $M3$ under the official PhysioNet 2019 metric (`evaluate_sepsis_score.py`), demonstrating that $M3$ achieves an Official Normalized Utility of $U_{\text{official}} = +0.655944$ ($+0.6559$, 95% CI: `[+0.6310, +0.6800]`) at a prespecified validation threshold $th=0.190$.
-4. **Leakage-Safe Threshold Isolation:** We enforce strict two-stage threshold isolation, proving that threshold $th=0.190$ was selected on development validation data prior to external test evaluation, and report complete threshold sensitivity sweeps.
-5. **Operational Workload & Alarm Burden Audit:** We quantify operational alert frequency ($16.99$ alerts per $100$ patient-days, PPV = $18.81\%$, $4,333$ false alerts) on $20,000$ held-out test patients from Emory University Hospital, evaluating the impact of cross-hospital prevalence shift ($8.80\%$ to $5.33\%$).
+1. **Controlled Model Progression ($M1$–$M5$):** We systematically benchmark a structured family of models on $40,336$ ICU stays across two health systems (Table 1, Table 2, Figure 2), establishing that a compact Time-Aware Transformer ($M3$) provides the strongest cross-hospital discriminative representation (AUROC = $0.9617$), outperforming XGBoost ($M1$), plain Transformers ($M2$), and complex hybrid architectures ($M4$, $M5$).
+2. **Factorial Ablation & Saturation Analysis:** We isolate the main and interaction effects of temporal time-deltas ($\Delta t$) and missingness masks ($m$) (Table 6, Figure 10), proving that explicitly representing clinical observation dynamics drives discriminative gains, while demonstrating that further architectural over-parameterization ($M4, M5$) yields no significant improvement ($p=0.068$).
+3. **Official PhysioNet 2019 Utility Evaluation:** We evaluate $M3$ under the official PhysioNet 2019 metric (`evaluate_sepsis_score.py`), demonstrating that $M3$ achieves an Official Normalized Utility of $U_{\text{official}} = +0.655944$ ($+0.6559$, 95% CI: `[+0.6310, +0.6800]`) at a prespecified validation threshold $th=0.190$ (Table 3, Figure 5).
+4. **Leakage-Safe Threshold Isolation:** We enforce strict two-stage threshold isolation (Figure 1), proving that threshold $th=0.190$ was selected on development validation data prior to external test evaluation, and report complete threshold sensitivity sweeps (Table 4, Table 5, Figure 5).
+5. **Operational Workload & Alarm Burden Audit:** We quantify operational alert frequency ($16.99$ alerts per $100$ patient-days, PPV = $18.81\%$, $4,333$ false alerts) on $20,000$ held-out test patients from Emory University Hospital (Table 4, Figure 6), evaluating the impact of cross-hospital prevalence shift ($8.80\%$ to $5.33\%$) (Figure 8).
 
 ---
 
@@ -60,7 +60,7 @@ Dataset shift represents a major barrier to deploying clinical machine learning 
 ## 3. MATERIALS AND METHODS
 
 ### 3.1 Cohort Provenance & Dataset Setup
-We utilized the open-access PhysioNet/Computing in Cardiology Challenge 2019 dataset (Reyna et al., 2019; Goldberger et al., 2000), comprising $40,336$ adult ICU stays across two major health systems:
+We utilized the open-access PhysioNet/Computing in Cardiology Challenge 2019 dataset (Reyna et al., 2019; Goldberger et al., 2000), comprising $40,336$ adult ICU stays across two major health systems (Table 1, Figure 1):
 - **Set A (Development Cohort - BIDMC / Hospital A):** $20,336$ ICU stays ($1,790$ septic [$8.80\%$], $18,546$ non-septic [$91.20\%$]; $790,215$ hourly observations). Sub-split into $18,302$ training stays ($90.0\%$) and $2,034$ validation stays ($10.0\%$).
 - **Set B (Held-Out External Test Cohort - Emory University Hospital / Hospital B):** $20,000$ ICU stays ($1,066$ septic [$5.33\%$], $18,934$ non-septic [$94.67\%$]; $753,927$ hourly observations).
 - **Transfer Direction:** **BIDMC $\to$ Emory** (Models trained and validation-tuned strictly on Set A; evaluated once on Set B).
@@ -72,12 +72,12 @@ Raw clinical features were standardized to zero mean and unit variance based str
 3. Elapsed time delta $\Delta t_{t,j} \in \mathbb{R}_{\ge 0}$, defined as the elapsed time in hours since the previous observation of variable $j$.
 
 ### 3.3 M3 Architecture Specifications & Real-Time Sequential Framing
-The $M3$ Time-Aware Transformer (`TACTModel`) maps input triplets $\mathbf{x}(t) = [\mathbf{v}(t), \mathbf{m}(t), \mathbf{\Delta t}(t)] \in \mathbb{R}^{102}$ at each hour $t$ to hidden representation $\mathbf{h}(t) \in \mathbb{R}^{64}$ through a linear embedding layer, Time2Vec delta encodings, LayerNorm, and sinusoidal positional encodings. The network incorporates $3$ Transformer encoder layers ($4$ attention heads, $d_{\text{model}}=64$, `dim_feedforward=128`, `activation="relu"`, dropout $p=0.10$). A linear classification head projects $\mathbf{h}(t)$ to uncalibrated logit $z(t)$, transformed via sigmoid activation to yield risk probability $p(t) \in (0, 1)$. Total parameter count is $185,473$ ($\sim 185\text{K}$).
+The $M3$ Time-Aware Transformer (`TACTModel`) maps input triplets $\mathbf{x}(t) = [\mathbf{v}(t), \mathbf{m}(t), \mathbf{\Delta t}(t)] \in \mathbb{R}^{102}$ at each hour $t$ to hidden representation $\mathbf{h}(t) \in \mathbb{R}^{64}$ through a linear embedding layer, Time2Vec delta encodings, LayerNorm, and sinusoidal positional encodings (Figure 2). The network incorporates $3$ Transformer encoder layers ($4$ attention heads, $d_{\text{model}}=64$, `dim_feedforward=128`, `activation="relu"`, dropout $p=0.10$). A linear classification head projects $\mathbf{h}(t)$ to uncalibrated logit $z(t)$, transformed via sigmoid activation to yield risk probability $p(t) \in (0, 1)$. Total parameter count is $185,473$ ($\sim 185\text{K}$).
 
 The model generates an hourly real-time risk estimate $p(t)$ using only information available up to prediction hour $t$. Predictions therefore represent sequential early-warning decisions rather than a single admission-level static classification.
 
 ### 3.4 Two-Stage Threshold Isolation Protocol
-To prevent data leakage and retrospective test-set optimization, decision threshold selection was conducted via a strict two-stage protocol:
+To prevent data leakage and retrospective test-set optimization, decision threshold selection was conducted via a strict two-stage protocol (Figure 1):
 - **Stage 1 (BIDMC Validation Selection):** Candidate thresholds $th \in [0.01, 0.99]$ in steps of $0.005$ were evaluated strictly on the BIDMC validation split ($N=2,034$), identifying $th^* = 0.190$ as the operating point that maximized validation utility.
 - **Stage 2 (External Test Evaluation):** The frozen model checkpoint (`best_m3_frozen.pt`) and prespecified locked threshold $th = 0.190$ were evaluated **once** on the independent held-out Emory test cohort ($N=20,000$).
 
@@ -100,11 +100,11 @@ For the $20,000$ Emory test patients, the cohort utility constants are $U_{\text
 ## 4. EXPERIMENTAL RESULTS
 
 ### 4.1 Architectural Progression & Baseline Comparison
-Table 1 presents cross-hospital performance across the model family on the held-out Emory test set ($N=20,000$).
+Table 2 and Figure 7 present cross-hospital performance across the model family ($M1$–$M5$) on the held-out Emory test set ($N=20,000$).
 
 ```text
 =========================================================================================================
-TABLE 1: Cross-Hospital Performance Comparison Across Model Family (Emory Held-Out Test Set, N=20,000)
+TABLE 2: Cross-Hospital Performance Comparison Across Model Family (Emory Held-Out Test Set, N=20,000)
 =========================================================================================================
 Model ID  Architecture Description                  AUROC     AUPRC    Brier     ECE     Official Utility
 ---------------------------------------------------------------------------------------------------------
@@ -117,15 +117,15 @@ M5        Multi-Hybrid / MoE Architecture          0.9591    0.4182   0.0156   0
 ```
 *Footnote: `—` indicates baseline models for which raw hourly prediction arrays were not preserved, preventing independent calculation under the official PhysioNet 2019 utility evaluator (`evaluate_sepsis_score.py`) without re-training.*
 
-The compact $M3$ Time-Aware Transformer achieved the highest cross-hospital discriminative performance (AUROC = $0.961726$ [$0.9617$], AUPRC = $0.423114$ [$0.4231$]) and official normalized utility ($U_{\text{official}} = +0.655944$ [$+0.6559$]).
+The compact $M3$ Time-Aware Transformer achieved the highest cross-hospital discriminative performance (AUROC = $0.961726$ [$0.9617$], AUPRC = $0.423114$ [$0.4231$]; Figure 3) and official normalized utility ($U_{\text{official}} = +0.655944$ [$+0.6559$]; Table 3).
 
 ### 4.2 Calibration Analysis
-Probability calibration on the external Emory test cohort demonstrated strong reliability:
+Probability calibration on the external Emory test cohort demonstrated strong reliability (Figure 4):
 - **Brier Score:** `0.015290` (vs XGBoost `0.0241`, Plain Transformer `0.0189`)
 - **Expected Calibration Error (ECE):** `0.018151` across 10 equal-width bins (vs XGBoost `0.0382`, Plain Transformer `0.0245`).
 
 ### 4.3 Official PhysioNet Utility Evaluation & Decomposition
-Under the official challenge evaluator on Emory test data ($N=20,000$), $M3$ achieved a raw observed utility of $U_{\text{obs}} = 1,515.6500$ points, an inaction reference utility of $U_{\text{inact}} = -9,512.4444$ points, and an oracle best utility of $U_{\text{best}} = 7,298.7778$ points. Applying official metric normalization:
+Under the official challenge evaluator on Emory test data ($N=20,000$), $M3$ achieved a raw observed utility of $U_{\text{obs}} = 1,515.6500$ points, an inaction reference utility of $U_{\text{inact}} = -9,512.4444$ points, and an oracle best utility of $U_{\text{best}} = 7,298.7778$ points (Table 3). Applying official metric normalization:
 $$U_{\text{official}} = \frac{1,515.6500 - (-9,512.4444)}{7,298.7778 - (-9,512.4444)} = \frac{11,028.0944}{16,811.2222} = \mathbf{+0.655944} \quad (95\%\text{ CI: }[+0.6310, +0.6800])$$
 
 This result indicates that $M3$'s alerting strategy occupies approximately $65.59\%$ of the normalized utility range between the inaction reference strategy ($0.0$) and the ground-truth oracle ceiling ($+1.000000$). The ground-truth oracle ceiling ($+1.000000$, $7,298.7778$ pts) represents an infeasible label-informed mathematical reference bound under perfect future knowledge.
@@ -133,11 +133,11 @@ This result indicates that $M3$'s alerting strategy occupies approximately $65.5
 M3 achieved positive normalized utility (+0.655944) under the official PhysioNet 2019 utility function on an independent external Emory cohort, indicating that its alerting behavior generated net utility relative to the inactive reference strategy under the challenge's predefined scoring framework. This score represents performance under a predefined challenge decision-cost function and should not be interpreted as direct evidence of prospective clinical effectiveness, clinical benefit, or cost-effectiveness.
 
 ### 4.4 External Threshold Sensitivity Analysis
-To evaluate utility sensitivity to decision boundary shifts, post-hoc descriptive sweeps were conducted across thresholds $th \in [0.05, 0.70]$ on Emory test data:
+To evaluate utility sensitivity to decision boundary shifts, post-hoc descriptive sweeps were conducted across thresholds $th \in [0.05, 0.70]$ on Emory test data (Table 4, Table 5, Figure 5):
 
 ```text
 =========================================================================
-TABLE 2: Official Threshold Sensitivity Sweep (Emory External Test Set)
+TABLE 5: Official Threshold Sensitivity Sweep (Emory External Test Set)
 =========================================================================
 Threshold (th)    Official Normalized Utility (U_official)    Status
 -------------------------------------------------------------------------
@@ -153,10 +153,10 @@ Threshold (th)    Official Normalized Utility (U_official)    Status
 =========================================================================
 ```
 
-The threshold of 0.190, prespecified strictly on BIDMC validation data before external test evaluation, coincided with the highest observed utility among the evaluated operating points in the subsequent descriptive Emory sensitivity analysis.
+The threshold of 0.190, prespecified strictly on BIDMC validation data before external test evaluation, coincided with the highest observed utility among the evaluated operating points in the subsequent descriptive Emory sensitivity analysis (Figure 5).
 
 ### 4.5 Operational Workload & Alert Burden Audit
-Operational workload auditing across $753,927$ hourly observations ($31,413.6$ patient-days) on Emory test data revealed:
+Operational workload auditing across $753,927$ hourly observations ($31,413.6$ patient-days) on Emory test data revealed (Table 4, Figure 6):
 - **Total Alerts Issued:** $5,337$ alerts ($1,004$ True Positive Sepsis Alerts, $4,333$ Non-Sepsis False Alerts)
 - **Alert Positive Predictive Value (PPV):** **`18.81%`** (`0.188121`)
 - **Alert Frequency:** **`16.99` alerts per 100 patient-days** ($0.267$ alerts/patient)
@@ -166,7 +166,7 @@ Operational workload auditing across $753,927$ hourly observations ($31,413.6$ p
 This illustrates why workload auditing is important before prospective clinical evaluation.
 
 ### 4.6 Factorial M3 Component Ablations
-Controlled $2 \times 2$ factorial ablations across 5 random seeds established:
+Controlled $2 \times 2$ factorial ablations across 5 random seeds established (Table 6, Figure 10):
 - **Values Only Baseline ($v$):** AUROC = $0.9265 \pm 0.0022$
 - **Main Effect of Missingness Mask ($m$):** $+0.0155$ AUROC ($0.9420 \pm 0.0019$)
 - **Main Effect of Time Delta ($\Delta t$):** $+0.0215$ AUROC ($0.9480 \pm 0.0018$)
@@ -175,16 +175,16 @@ Controlled $2 \times 2$ factorial ablations across 5 random seeds established:
 The missingness mask was empirically associated with a $+0.0155$ AUROC improvement, while the time-delta representation was associated with a $+0.0215$ AUROC improvement.
 
 ### 4.7 Architectural Saturation & Disclosed Null Findings
-Increasing architectural complexity beyond $M3$ ($185\text{K}$ parameters) to Organ-Aware ($M4$, $320\text{K}$ parameters) or Multi-Hybrid Mixture-of-Experts ($M5$, $450\text{K}$ parameters) yielded AUROCs of $0.9582$ and $0.9591$, respectively. Paired bootstrap significance testing confirmed that $M4$ and $M5$ did not provide a statistically significant performance gain over $M3$ ($p=0.068$).
+Increasing architectural complexity beyond $M3$ ($185\text{K}$ parameters) to Organ-Aware ($M4$, $320\text{K}$ parameters) or Multi-Hybrid Mixture-of-Experts ($M5$, $450\text{K}$ parameters) yielded AUROCs of $0.9582$ and $0.9591$, respectively (Figure 7). Paired bootstrap significance testing confirmed that $M4$ and $M5$ did not provide a statistically significant performance gain over $M3$ ($p=0.068$).
 
 ### 4.8 Leakage-Safe Custom Threshold Predictability
 In counterfactual analysis, an unachievable patient-adaptive threshold policy yielded $U = +0.7850$. However, a leakage-safe classifier trained on BIDMC data to predict patient-custom threshold requirements achieved a test AUPRC of only $0.2653$ on Emory test data—barely exceeding the random prevalence baseline ($0.2608$). This null finding demonstrates that adaptive threshold requirements are not predictable from early baseline features, establishing that fixed prespecified threshold policies are the sole deployable option under the evaluated feature set.
 
 ### 4.9 Statistical Uncertainty & Multi-Seed Stability
-Multi-seed evaluation across $N=6$ random initialization seeds confirmed high stability:
+Multi-seed evaluation across $N=6$ random initialization seeds confirmed high stability (Table 7, Figure 9):
 - **AUROC:** $0.9609 \pm 0.0016$
 - **AUPRC:** $0.4224 \pm 0.0026$
-- **Official Utility ($th=0.190$):** $+0.6559 \pm 0.0020$
+- **Official Utility ($th=0.190$):** $+0.6559 \pm 0.0020$ (Patient-level cluster bootstrap 95% CI: `[+0.6310, +0.6800]`).
 
 ---
 
@@ -200,13 +200,13 @@ In temporal clinical early warning, high discriminative rank-ordering (AUROC) do
 We explicitly emphasize that positive PhysioNet utility must not be equated with prospective clinical effectiveness, cost-effectiveness, or patient outcome improvement. PhysioNet utility is a mathematical surrogate scoring function designed for standardized algorithm ranking. Actual clinical effectiveness depends on nurse compliance, diagnostic workup speed, local antibiotic stewardship protocols, and site-specific alarm fatigue thresholds.
 
 ### 5.4 Cross-Hospital Transportability & Prevalence Shift
-Transferring models from BIDMC ($8.80\%$ sepsis prevalence) to Emory ($5.33\%$ prevalence) introduces a significant domain shift. While discriminative rank-ordering remained robust ($0.9617$), lower disease prevalence naturally depresses the alert Positive Predictive Value (PPV = $18.81\%$). The lower prevalence in the external cohort provides an important context for the observed lower alert PPV.
+Transferring models from BIDMC ($8.80\%$ sepsis prevalence) to Emory ($5.33\%$ prevalence) introduces a significant domain shift (Figure 8). While discriminative rank-ordering remained robust ($0.9617$), lower disease prevalence naturally depresses the alert Positive Predictive Value (PPV = $18.81\%$). The lower prevalence in the external cohort provides an important context for the observed lower alert PPV.
 
 ### 5.5 Operational Alert Burden & Clinician Alarm Fatigue
-Operational auditing revealed that at $th=0.190$, $M3$ issued $5,337$ total alerts ($4,333$ false alarms), resulting in an alert rate of $16.99$ alerts per $100$ patient-days. An alert PPV of $18.81\%$ means that approximately $4$ out of $5$ clinical alerts are false alarms. While $74.14\%$ of patients experienced zero false alerts, the overall alert volume highlights a potential alarm fatigue burden that requires integration with clinical triage protocols before deployment.
+Operational auditing revealed that at $th=0.190$, $M3$ issued $5,337$ total alerts ($4,333$ false alarms), resulting in an alert rate of $16.99$ alerts per $100$ patient-days (Figure 6). An alert PPV of $18.81\%$ means that approximately $4$ out of $5$ clinical alerts are false alarms. While $74.14\%$ of patients experienced zero false alerts, the overall alert volume highlights a potential alarm fatigue burden that requires integration with clinical triage protocols before deployment.
 
 ### 5.6 Threshold Provenance & Policy Isolation
-A major vulnerability in clinical prediction literature is retrospective threshold optimization on test data. By enforcing strict two-stage threshold isolation—selecting $th=0.190$ on BIDMC validation data before unblinding Emory test predictions—we established that $M3$'s utility performance is robust and leakage-free. Post-hoc sensitivity analysis confirmed that $th=0.190$ coincided with peak observed utility ($+0.655944$) on the test set.
+A major vulnerability in clinical prediction literature is retrospective threshold optimization on test data. By enforcing strict two-stage threshold isolation—selecting $th=0.190$ on BIDMC validation data before unblinding Emory test predictions (Figure 1)—we established that $M3$'s utility performance is robust and leakage-free. Post-hoc sensitivity analysis confirmed that $th=0.190$ coincided with peak observed utility ($+0.655944$) on the test set (Figure 5).
 
 ### 5.7 Architectural Saturation & Disclosed Null Findings
 Our evaluation revealed that increasing architectural complexity beyond $M3$ ($M4, M5$) did not significantly improve performance over $M3$ ($p=0.068$). Furthermore, attempts to predict patient-adaptive thresholds failed (AUPRC = $0.2653$). These null findings provide important guidance for clinical ML design: compact time-aware Transformers that explicitly encode measurement timing ($\Delta t$) and missingness ($m$) capture essential temporal dynamics without requiring complex organ-branching or mixture-of-experts over-parameterization.
@@ -247,7 +247,7 @@ The model architecture implementations, feature preprocessing pipelines, and off
 `[AUTHOR ACTION REQUIRED]`
 
 **Reproducibility Statement:**  
-Every numerical metric reported in this manuscript ($0.961726$ AUROC, $0.423114$ AUPRC, $0.015290$ Brier, $0.018151$ ECE, $+0.655944$ Official Utility, $18.81\%$ PPV, $16.99$ alerts/100 days) is cryptographically and empirically anchored to verified prediction artifacts (`results/m3_final_test_predictions.npz`), frozen model checkpoints (`experiments/final_m3_frozen/best_m3_frozen.pt`), source JSON split manifests (`train_ids.json`, `val_ids.json`, `test_ids.json`), and executable evaluation scripts (`evaluation/official_physionet2019.py`, `scripts/run_multiseed_stability_check.py`).
+Every numerical metric reported in this manuscript ($0.961726$ AUROC, $0.423114$ AUPRC, $0.015290$ Brier, $0.018151$ ECE, $+0.655944$ Official Utility, $18.81\%$ PPV, $16.99$ alerts/100 days) is cryptographically and empirically anchored to verified prediction artifacts (`results/m3_final_test_predictions.npz`), frozen model checkpoints (`experiments/final_m3_frozen/best_m3_frozen.pt`), source JSON split manifests (`train_ids.json`, `val_ids.json`, `test_ids.json`), and executable evaluation scripts (`evaluation/official_physionet2019.py`, `scripts/run_multiseed_stability_check.py`) (Table 6).
 
 ---
 

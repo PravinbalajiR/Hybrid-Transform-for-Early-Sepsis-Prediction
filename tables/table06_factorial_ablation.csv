@@ -1,0 +1,5 @@
+Configuration,Mask Present (m),Delta Present (dt),Test AUROC (Mean ± SD),Main / Interaction Effect
+Values Only (v),No,No,0.9265 ± 0.0022,Baseline
+"Values + Mask (v, m)",Yes,No,0.9420 ± 0.0019,+0.0155 AUROC (Mask Main Effect)
+"Values + Delta (v, dt)",No,Yes,0.9480 ± 0.0018,+0.0215 AUROC (Delta Main Effect)
+"Full Triplet (v, m, dt)",Yes,Yes,0.961726 ± 0.0016,+0.0017 AUROC (Interaction Effect)
