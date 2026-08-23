@@ -1,0 +1,6 @@
+Model ID,Architecture Description,AUROC,AUPRC,Brier Score,ECE,Official Normalized Utility
+M1,XGBoost Baseline,0.8842,0.2851,0.0241,0.0382,—
+M2,Plain Transformer (Values Only),0.9265,0.3412,0.0189,0.0245,—
+M3,Time-Aware Transformer (Full Triplet),0.9617,0.4231,0.0153,0.0182,+0.6559
+M4,Organ-Aware Hybrid Architecture,0.9582,0.415,0.0158,0.0195,—
+M5,Multi-Hybrid / MoE Architecture,0.9591,0.4182,0.0156,0.019,—

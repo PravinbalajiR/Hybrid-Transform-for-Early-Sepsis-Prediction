@@ -1,0 +1,10 @@
+Threshold (th),Official Utility,Status / Role
+0.05,0.520426,Descriptive Sensitivity
+0.1,0.622666,Descriptive Sensitivity
+0.15,0.654351,Descriptive Sensitivity
+0.19,0.655944,Prespecified Operating Point (BIDMC Val)
+0.25,0.640674,Descriptive Sensitivity
+0.3,0.621805,Descriptive Sensitivity
+0.31,0.620532,Descriptive Sensitivity
+0.5,0.583403,Descriptive Sensitivity
+0.7,0.517381,Descriptive Sensitivity
