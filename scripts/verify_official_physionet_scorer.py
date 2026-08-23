@@ -1,8 +1,8 @@
 """
 verify_official_physionet_scorer.py
 ----------------------------------
-Official PhysioNet 2019 Challenge Utility Scorer Line-by-Line Verification Script.
-Compares evaluation/utility_score.py against official PhysioNet 2019 evaluation logic
+Official PhysioNet 2019 Challenge Utility Scorer Verification Script.
+Compares evaluation/utility_score.py against evaluation/official_physionet2019.py
 to verify 100% mathematical identity of utility score computation.
 """
 
@@ -15,61 +15,7 @@ BASE_DIR = Path(__file__).parent.parent
 sys.path.insert(0, str(BASE_DIR))
 
 from evaluation.utility_score import _compute_utility_for_patient, compute_utility_score
-
-def official_physionet_2019_compute_utility_for_patient(
-    labels: np.ndarray,
-    predictions: np.ndarray,
-    dt_early: float = 12.0,
-    dt_optimal: float = 6.0,
-    dt_late: float = 3.0,
-    max_u_tp: float = 1.0,
-    min_u_fn: float = -2.0,
-    u_fp: float = -0.05,
-):
-    """
-    Official PhysioNet 2019 Challenge Evaluation Logic for a single patient.
-    Reference: PhysioNet/CinC Challenge 2019 evaluate_sepsis_score.py
-    """
-    labels = np.asarray(labels, dtype=int)
-    predictions = np.asarray(predictions, dtype=int)
-    T = len(labels)
-
-    is_sepsis = int(labels.max()) == 1
-
-    if not is_sepsis:
-        # Non-sepsis patient: any alarm is a false positive
-        n_fp = int(predictions.sum())
-        utility = u_fp * n_fp
-        best = 0.0
-        return utility, best
-
-    # Sepsis patient
-    t_onset = int(np.argmax(labels))
-    alarm_times = np.where(predictions == 1)[0]
-
-    if len(alarm_times) == 0:
-        # Missed sepsis
-        return min_u_fn, max_u_tp
-
-    t_alarm = int(alarm_times[0])
-    dt = t_onset - t_alarm
-
-    if dt >= dt_optimal:
-        if dt >= dt_early:
-            achieved = 0.0
-        else:
-            achieved = max_u_tp * (dt - dt_early) / (dt_optimal - dt_early)
-    elif dt >= -dt_late:
-        achieved = max_u_tp * (dt + dt_late) / (dt_optimal + dt_late)
-        achieved = max(0.0, achieved)
-    else:
-        achieved = 0.0
-
-    fp_alarms = int((alarm_times < (t_onset - dt_early)).sum())
-    achieved += u_fp * fp_alarms
-    best = max_u_tp
-
-    return achieved, best
+from evaluation.official_physionet2019 import compute_prediction_utility
 
 def main():
     print("=" * 80)
@@ -89,12 +35,24 @@ def main():
             lbls[t_onset:] = 1
         preds = np.random.binomial(1, 0.05, T)
 
-        u1, b1 = _compute_utility_for_patient(lbls, preds)
-        u2, b2 = official_physionet_2019_compute_utility_for_patient(lbls, preds)
+        obs1, best1, inact1 = _compute_utility_for_patient(lbls, preds)
+        
+        # Direct official evaluation call
+        dt_early, dt_optimal, dt_late = -12, -6, 3
+        max_u_tp, min_u_fn, u_fp, u_tn = 1, -2, -0.05, 0
+        best_preds = np.zeros(T, dtype=int)
+        inact_preds = np.zeros(T, dtype=int)
+        if np.any(lbls):
+            t_sepsis = np.argmax(lbls) - dt_optimal
+            best_preds[max(0, int(t_sepsis + dt_early)) : min(int(t_sepsis + dt_late + 1), T)] = 1
 
-        if abs(u1 - u2) > 1e-9 or abs(b1 - b2) > 1e-9:
+        obs2   = compute_prediction_utility(lbls, preds, dt_early, dt_optimal, dt_late, max_u_tp, min_u_fn, u_fp, u_tn, check_errors=False)
+        best2  = compute_prediction_utility(lbls, best_preds, dt_early, dt_optimal, dt_late, max_u_tp, min_u_fn, u_fp, u_tn, check_errors=False)
+        inact2 = compute_prediction_utility(lbls, inact_preds, dt_early, dt_optimal, dt_late, max_u_tp, min_u_fn, u_fp, u_tn, check_errors=False)
+
+        if abs(obs1 - obs2) > 1e-9 or abs(best1 - best2) > 1e-9 or abs(inact1 - inact2) > 1e-9:
             mismatch_count += 1
-            print(f"Mismatch at patient {i}: project=({u1}, {b1}), official=({u2}, {b2})")
+            print(f"Mismatch at patient {i}: project=({obs1}, {best1}, {inact1}), official=({obs2}, {best2}, {inact2})")
 
     print(f"\nTested {n_patients} synthetic patient sequences across edge cases.")
     print(f"Mismatch Count: {mismatch_count}")
