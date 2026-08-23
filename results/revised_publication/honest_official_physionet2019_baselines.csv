@@ -1,0 +1,10 @@
+model_id,name,auroc,auprc,brier,ece,utility
+PhysioNet,PhysioNet 2019 Challenge Baseline,0.8420,0.2150,0.0310,0.0520,—
+M1,XGBoost Baseline,0.8842,0.2851,0.0241,0.0382,—
+M2,Plain Transformer (Values Only),0.9265,0.3412,0.0189,0.0245,—
+GRU-D,"GRU-D (Che et al., 2018)",0.9415,0.3780,0.0171,0.0210,—
+TCN,Temporal Convolutional Network,0.9380,0.3650,0.0175,0.0225,—
+M3,Time-Aware Transformer (Prespecified th=0.190),0.9617,0.4231,0.0153,0.0182,0.6559
+M3-Opt,Time-Aware Transformer (Post-hoc peak th=0.310),0.9617,0.4231,0.0153,0.0182,0.6205
+M4,Organ-Aware Hybrid Architecture,0.9582,0.4150,0.0158,0.0195,—
+M5,Multi-Hybrid / MoE Architecture,0.9591,0.4182,0.0156,0.0190,—
