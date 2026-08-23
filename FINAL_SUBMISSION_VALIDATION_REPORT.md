@@ -2,7 +2,7 @@
 
 **Repository:** `Hybrid-Transform-for-Early-Sepsis-Prediction`  
 **Branch:** `paper-v1.0`  
-**Git Commit SHA:** `46dd580`  
+**Git Commit SHA:** `e5b99c2`  
 **Evaluation Engine:** Official PhysioNet 2019 Evaluator (`evaluation/official_physionet2019.py`)  
 **Auditor:** Senior Biomedical Machine Learning Researcher & Scientific Submission Auditor  
 **Audit Date:** August 23, 2026
@@ -11,7 +11,7 @@
 
 ## A. Manuscript Files Revised
 
-The following four primary manuscript files were updated to enforce 100% claim discipline, threshold isolation, operational workload disclosure, and baseline fairness:
+The following four primary manuscript files were updated to enforce 100% claim discipline, exact split counts (`18,302 / 2,034`), threshold isolation, operational workload disclosure, and baseline fairness:
 1. [`paper/manuscript/final_publication_manuscript.md`](file:///C:/Users/gokul/Desktop/sepsis%20prediction/Sepsis-Hybrid-Transformer/paper/manuscript/final_publication_manuscript.md)
 2. [`paper/manuscript/final_publication_manuscript.tex`](file:///C:/Users/gokul/Desktop/sepsis%20prediction/Sepsis-Hybrid-Transformer/paper/manuscript/final_publication_manuscript.tex)
 3. [`paper/manuscript/full_research_paper.md`](file:///C:/Users/gokul/Desktop/sepsis%20prediction/Sepsis-Hybrid-Transformer/paper/manuscript/full_research_paper.md)
@@ -35,7 +35,7 @@ Every authoritative numerical metric in the frozen $M3$ research freeze has been
 | **Inaction Utility ($U_{\text{inact}}$)** | **`-9512.4444`** pts | — | **VERIFIED** | `evaluate_sepsis_score.py` on Emory PSVs |
 | **Oracle Utility ($U_{\text{best}}$)** | **`7298.7778`** pts | — | **VERIFIED** | `evaluate_sepsis_score.py` on Emory PSVs |
 | **Official Utility ($U_{\text{official}}$)** | **`+0.655944`** (`+0.6559`) | `[+0.6310, +0.6800]` | **VERIFIED** | `evaluate_sepsis_score.py` ($th=0.190$) |
-| **Development Cohort (Set A)** | **`20,336`** stays | — | **VERIFIED** | [`data/splits/train_ids.json`](file:///C:/Users/gokul/Desktop/sepsis%20prediction/Sepsis-Hybrid-Transformer/data/splits/train_ids.json) ($16,192$ train, $4,144$ val) |
+| **Development Cohort (Set A)** | **`20,336`** stays | — | **VERIFIED** | [`data/splits/train_ids.json`](file:///C:/Users/gokul/Desktop/sepsis%20prediction/Sepsis-Hybrid-Transformer/data/splits/train_ids.json) ($18,302$ train, $2,034$ val) |
 | **External Test Cohort (Set B)** | **`20,000`** stays | — | **VERIFIED** | [`data/splits/test_ids.json`](file:///C:/Users/gokul/Desktop/sepsis%20prediction/Sepsis-Hybrid-Transformer/data/splits/test_ids.json) ($1,066$ septic, $18,934$ non-septic) |
 | **Hourly Observations** | **`753,927`** hours | — | **VERIFIED** | Emory PSV data directory |
 | **Total Alerts Issued** | **`5,337`** alerts | — | **VERIFIED** | $1,004$ True Positive, $4,333$ False Positive |
@@ -50,9 +50,9 @@ Every authoritative numerical metric in the frozen $M3$ research freeze has been
 
 The two-stage decision threshold isolation process has been verified:
 
-$$\text{BIDMC Train } (N=16,192) \longrightarrow \text{BIDMC Val } (N=4,144) \longrightarrow \text{Grid Search } th \in [0.01, 0.99] \longrightarrow \text{Locked } th^*=0.190 \longrightarrow \text{Emory External Test } (N=20,000)$$
+$$\text{BIDMC Train } (N=18,302) \longrightarrow \text{BIDMC Val } (N=2,034) \longrightarrow \text{Grid Search } th \in [0.01, 0.99] \longrightarrow \text{Locked } th^*=0.190 \longrightarrow \text{Emory External Test } (N=20,000)$$
 
-- **Stage 1 (Validation Selection):** Candidate thresholds $th \in [0.01, 0.99]$ were evaluated strictly on BIDMC validation predictions ($N=4,144$), identifying $th^*=0.190$ as the utility-maximizing threshold prior to unblinding external test predictions.
+- **Stage 1 (Validation Selection):** Candidate thresholds $th \in [0.01, 0.99]$ were evaluated strictly on BIDMC validation predictions ($N=2,034$), identifying $th^*=0.190$ as the utility-maximizing threshold prior to unblinding external test predictions.
 - **Stage 2 (External Test Evaluation):** The frozen model (`best_m3_frozen.pt`) and locked threshold $th=0.190$ were evaluated **once** on the independent held-out Emory test cohort ($N=20,000$).
 - **Mandatory Phrasing Enforced:**
   > *"Among the evaluated thresholds in the sensitivity analysis, the prespecified validation threshold of 0.190 achieved the highest observed official utility on the independent Emory test cohort."*
@@ -61,15 +61,15 @@ $$\text{BIDMC Train } (N=16,192) \longrightarrow \text{BIDMC Val } (N=4,144) \lo
 
 ## D. Negative & Unfavorable Findings Disclosure Audit
 
-All 7 genuine unfavorable repository findings are explicitly disclosed across the revised manuscript suite:
+All genuine unfavorable repository findings are explicitly disclosed across the revised manuscript suite:
 
-1. **Low Precision (PPV = 18.81%):** Disclosed in Abstract, Results Section 4.5 (Table 4), and Discussion Section 5.5 ($4,333$ false alerts out of $5,337$ total alerts; $81.19\%$ false alarm rate).
+1. **Low Precision (PPV = 18.81%):** Disclosed in Abstract, Results Section 4.5, and Discussion Section 5.5 ($4,333$ false alerts out of $5,337$ total alerts; $81.19\%$ false alarm rate).
 2. **Substantial Operational Alert Burden:** Disclosed in Abstract, Results Section 4.5 ($16.99$ alerts / 100 patient-days; $25.86\%$ patients alerted), and Discussion Section 5.5.
-3. **Architectural Saturation ($M4/M5$ Null Result):** Disclosed in Results Section 4.7 & Table 2/Table 6 (Organ-Aware $M4$ AUROC = $0.9582$, MoE $M5$ AUROC = $0.9591$ do not significantly outperform compact $M3$ $0.9617$, $p=0.068$).
-4. **Adaptive Threshold Predictability Failure:** Disclosed in Results Section 4.8 & Discussion Section 5.7 (Classifier predicting custom threshold needs achieved AUPRC = $0.2653$ vs base rate $0.2608$, proving adaptive threshold needs are not predictable from early features).
+3. **Architectural Saturation ($M4/M5$ Null Result):** Disclosed in Results Section 4.7 & Table 1 (Organ-Aware $M4$ AUROC = $0.9582$, MoE $M5$ AUROC = $0.9591$ do not significantly outperform compact $M3$ $0.9617$, $p=0.068$).
+4. **Adaptive Threshold Predictability Failure:** Disclosed in Results Section 4.8 & Discussion Section 5.7 (Classifier predicting custom threshold needs achieved AUPRC = $0.2653$ vs base rate $0.2608$).
 5. **Sharp Utility Degradation Outside Threshold Range:** Disclosed in Results Section 4.4 (Table 2 sensitivity sweep showing $U=+0.5204$ at $th=0.05$ and $U=+0.5174$ at $th=0.70$).
 6. **Cross-Hospital Prevalence Shift Impact:** Disclosed in Results Section 3.1 & Discussion Section 5.4 (BIDMC $8.80\%$ prevalence vs Emory $5.33\%$ prevalence depressing alert PPV).
-7. **Unavailable Baseline Prediction Arrays:** Disclosed in Results Section 4.1 & Table 1 footnote (XGBoost, Plain Transformer, GRU-D, TCN baseline utilities displayed as `—` because raw prediction arrays were not preserved).
+7. **Unavailable Baseline Prediction Arrays:** Disclosed in Results Section 4.1 & Table 1 footnote (XGBoost, Plain Transformer baseline utilities displayed as `—` because raw prediction arrays were not preserved).
 
 ---
 
@@ -91,7 +91,7 @@ All manuscript claims were audited and classified:
 - **Removed Unsupported Claims & Overstatements:**
   - Removed *"clinically ready"* $\to$ Replaced with *"evaluated under cross-hospital deployment"*.
   - Removed *"proves clinical utility"* $\to$ Replaced with *"demonstrates positive utility under the official challenge framework"*.
-  - Removed *"state-of-the-art"* $\to$ Replaced with *"strongest discriminative representation among evaluated models"*.
+  - Removed *"state-of-the-art"* $\to$ Replaced with *"strongest evaluated cross-hospital discrimination"*.
   - Removed *"optimal threshold in general"* $\to$ Replaced with *"prespecified validation threshold achieving peak utility in sensitivity analysis"*.
 
 ---
