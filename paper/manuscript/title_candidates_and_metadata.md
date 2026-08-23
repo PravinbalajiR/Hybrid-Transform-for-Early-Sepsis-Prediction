@@ -4,8 +4,8 @@
 
 ## 1. Title Candidates (5 Options)
 
-1. **Option 1 (Recommended & Final Title):**  
-   *High Discrimination Does Not Guarantee Clinical Utility: Cross-Hospital Utility Decomposition for Temporal Sepsis Early Warning*
+1. **Option 1 (Final Title):**  
+   *A Time-Aware Transformer for Cross-Hospital Sepsis Early Warning: From Discriminative Performance to Decision Utility and Alert Burden*
 2. **Option 2 (Architectural & Utility Focus):**  
    *Time-Aware Transformer Representations for Early Sepsis Prediction: Benchmarking Cross-Hospital Discrimination and Net Operational Utility*
 3. **Option 3 (Operational & Information Focus):**  

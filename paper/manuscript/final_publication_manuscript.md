@@ -1,4 +1,4 @@
-# High Discrimination Does Not Guarantee Optimal Clinical Utility: A Decision-Theoretic Evaluation of Cross-Hospital Sepsis Early Warning
+# A Time-Aware Transformer for Cross-Hospital Sepsis Early Warning: From Discriminative Performance to Decision Utility and Alert Burden
 
 ## ABSTRACT
 

@@ -4,8 +4,8 @@
 
 ## 1. Title Alternatives (10 Options)
 
-1. **Primary Recommendation:**  
-   *High Discrimination Does Not Guarantee Clinical Utility: An Oracle Decomposition of Cross-Hospital Sepsis Early Warning*
+1. **Primary Recommendation (Final Title):**  
+   *A Time-Aware Transformer for Cross-Hospital Sepsis Early Warning: From Discriminative Performance to Decision Utility and Alert Burden*
 2. **Methodological Focus:**  
    *Dual-Bound Utility Decomposition for Clinical AI: Diagnosing Information and Policy Limits in Sepsis Prediction*
 3. **Evaluation Focus:**  

@@ -1,6 +1,6 @@
 # 🛡️ NEXT-PHASE HOSTILE REVIEWER AUDIT (`NEXT_PHASE_REVIEWER_AUDIT.md`)
 
-**Target Manuscript:** *High Discrimination Does Not Guarantee Optimal Clinical Utility: A Decision-Theoretic Evaluation of Cross-Hospital Sepsis Early Warning*  
+**Target Manuscript:** *A Time-Aware Transformer for Cross-Hospital Sepsis Early Warning: From Discriminative Performance to Decision Utility and Alert Burden*  
 **Auditor Role:** Senior Biomedical Machine Learning Researcher, Statistical Auditor, & Clinical ML Journal Reviewer  
 **Audit Date:** August 23, 2026  
 **Repository State:** Frozen Checkpoint `best_m3_frozen.pt` (SHA256: `5b226074...`), Predictions `m3_final_test_predictions.npz` (SHA256: `e4a6a5e1...`)
