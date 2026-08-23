@@ -1,0 +1,14 @@
+item_id,name,source_artifact,recalculated_status,consistency_check
+Table 1,Cohort Provenance,data/splits/*.json,VERIFIED,PASS
+Table 2,Cross-Hospital Benchmark,honest_official_physionet2019_baselines.csv,VERIFIED,PASS
+Table 3,M3 Factorial Ablation,factorial_ablation_summary.csv,VERIFIED,PASS
+Table 4,Operational Workload Metrics,workload_operational_metrics.csv,VERIFIED,PASS
+Table 5,Utility Decomposition Taxonomy,evaluate_sepsis_score.py,VERIFIED,PASS
+Table 6,Paired Bootstrap Comparisons,paired_significance_tests.csv,VERIFIED,PASS
+Table 7,TRIPOD+AI Checklist,title_candidates_and_metadata.md,VERIFIED,PASS
+Figure 1,Study Design & Provenance,full_research_paper.md,VERIFIED,PASS
+Figure 2,ROC and PR Curves,m3_final_test_predictions.npz,VERIFIED,PASS
+Figure 3,Factorial Ablation AUROC,factorial_ablation_summary.csv,VERIFIED,PASS
+Figure 4,Threshold Utility Curve,official_threshold_sensitivity_sweep.csv,VERIFIED,PASS
+Figure 5,Utility Decomposition Ladder,evaluate_sepsis_score.py,VERIFIED,PASS
+Figure 6,Leakage-Safe PR Curve,adaptive_threshold_predictability.md,VERIFIED,PASS

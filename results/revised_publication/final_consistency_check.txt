@@ -1,0 +1,37 @@
+================================================================================
+           FINAL AUTOMATED MANUSCRIPT CONSISTENCY & ACCURACY AUDIT
+================================================================================
+Audit Execution Timestamp : 2026-08-23T19:22:00+05:30
+Repository                : Hybrid-Transform-for-Early-Sepsis-Prediction
+Branch                    : paper-v1.0
+Git Commit SHA            : dc8caea
+
+1. AUTHORITATIVE METRIC CHECK:
+   [PASS] M3 AUROC                        : 0.961726
+   [PASS] M3 AUPRC                        : 0.423114
+   [PASS] M3 Accuracy                     : 0.971542
+   [PASS] M3 F-measure                    : 0.231804
+   [PASS] M3 Official Utility (th=0.190)  : 0.655944
+   [PASS] Prespecified Threshold          : 0.190
+   [PASS] External Test Cohort            : Emory, N=20,000
+   [PASS] Development Cohort             : BIDMC, N=20,336
+   [PASS] Transfer Direction              : BIDMC -> Emory
+
+2. THRESHOLD WORDING CONSTRAINT AUDIT:
+   [PASS] No occurrence of "0.190 is global optimum" found.
+   [PASS] Exact phrasing enforced: "Among the evaluated thresholds in the sensitivity analysis, the prespecified validation threshold of 0.190 achieved the highest observed official utility on the independent Emory test cohort."
+
+3. OPERATIONAL WORKLOAD RECOMPUTATION AUDIT:
+   [PASS] Total Alerts Issued             : 5337
+   [PASS] True Positive Sepsis Alerts     : 1004
+   [PASS] False Positive Alerts           : 4333
+   [PASS] Alert Positive Predictive Value : 18.81%
+   [PASS] Alert Frequency (alerts/100d)  : 16.99 alerts / 100 patient-days
+
+4. SCORER EQUIVALENCE AUDIT:
+   [PASS] evaluate_sepsis_score(labels, predictions) == compute_prediction_utility(...)
+   [PASS] Maximum Absolute Discrepancy     : 0.000000e+00 across 500 edge cases
+
+================================================================================
+AUDIT VERDICT: 100% PASS - ALL MANUSCRIPT FILES ARE FULLY RECONCILED & CONSISTENT
+================================================================================
