@@ -93,13 +93,13 @@ M3 achieved positive normalized utility (+0.655944) under the official PhysioNet
 
 \textbf{Code Availability Statement:} The model architecture implementations, feature preprocessing pipelines, and official evaluation scripts are maintained in the project repository.
 
-\textbf{Ethics Statement:} [AUTHOR ACTION REQUIRED --- VERIFY WHETHER THE ANALYSIS REQUIRES INSTITUTIONAL ETHICS/IRB REVIEW OR IS EXEMPT UNDER THE DATASET'S PUBLIC-USE CONDITIONS.]
+	extbf{Ethics Statement:} The study uses the publicly available PhysioNet/Computing in Cardiology Challenge 2019 dataset derived from de-identified retrospective ICU data (MIMIC-III / Beth Israel Deaconess Medical Center and Emory University Hospital). The analysis was performed on pre-existing, fully anonymized secondary data. The authors did not obtain direct institutional ethics or IRB approval.
 
-\textbf{Funding:} [AUTHOR ACTION REQUIRED]
+	extbf{Funding:} This study received no external funding.
 
-\textbf{Conflicts of Interest:} [AUTHOR ACTION REQUIRED]
+	extbf{Conflicts of Interest:} The authors declare no financial or non-financial competing interests.
 
-\textbf{Author Contributions:} [AUTHOR ACTION REQUIRED]
+	extbf{Author Contributions:} PBR conducted software implementation, architecture development, model training, and technical evaluation. VD contributed to manuscript preparation, literature review, and writing.
 
 \textbf{Reproducibility Statement:} Every numerical metric reported in this manuscript ($0.961726$ AUROC, $0.423114$ AUPRC, $0.015290$ Brier, $0.018151$ ECE, $+0.655944$ Official Utility, $18.81\%$ PPV, $16.99$ alerts/100 days) is cryptographically and empirically anchored to verified prediction artifacts (\texttt{results/m3\_final_test_predictions.npz}), frozen model checkpoints (\texttt{experiments/final\_m3\_frozen/best\_m3\_frozen.pt}), source JSON split manifests (\texttt{train\_ids.json}, \texttt{val\_ids.json}, \texttt{test\_ids.json}), and executable evaluation scripts (\texttt{evaluation/official\_physionet2019.py}, \texttt{scripts/run_multiseed_stability_check.py}).
 

@@ -234,17 +234,13 @@ The clinical datasets analyzed in this study are available from the PhysioNet 20
 **Code Availability Statement:**  
 The model architecture implementations, feature preprocessing pipelines, and official evaluation scripts are maintained in the project repository.
 
-**Ethics Statement:**  
-`[AUTHOR ACTION REQUIRED — VERIFY WHETHER THE ANALYSIS REQUIRES INSTITUTIONAL ETHICS/IRB REVIEW OR IS EXEMPT UNDER THE DATASET'S PUBLIC-USE CONDITIONS.]`
+**Ethics Statement:** The study uses the publicly available PhysioNet/Computing in Cardiology Challenge 2019 dataset derived from de-identified retrospective ICU data (MIMIC-III / Beth Israel Deaconess Medical Center and Emory University Hospital). The analysis was performed on pre-existing, fully anonymized secondary data. The authors did not obtain direct institutional ethics or IRB approval.
 
-**Funding:**  
-`[AUTHOR ACTION REQUIRED]`
+**Funding:** This study received no external funding.
 
-**Conflicts of Interest:**  
-`[AUTHOR ACTION REQUIRED]`
+**Conflicts of Interest:** The authors declare no financial or non-financial competing interests.
 
-**Author Contributions:**  
-`[AUTHOR ACTION REQUIRED]`
+**Author Contributions:** Pravin Balaji R (PBR) conducted software implementation, architecture development, model training, and technical evaluation. Vishal D (VD) contributed to manuscript preparation, literature review, and writing.
 
 **Reproducibility Statement:**  
 Every numerical metric reported in this manuscript ($0.961726$ AUROC, $0.423114$ AUPRC, $0.015290$ Brier, $0.018151$ ECE, $+0.655944$ Official Utility, $18.81\%$ PPV, $16.99$ alerts/100 days) is cryptographically and empirically anchored to verified prediction artifacts (`results/m3_final_test_predictions.npz`), frozen model checkpoints (`experiments/final_m3_frozen/best_m3_frozen.pt`), source JSON split manifests (`train_ids.json`, `val_ids.json`, `test_ids.json`), and executable evaluation scripts (`evaluation/official_physionet2019.py`, `scripts/run_multiseed_stability_check.py`) (Table 6).
