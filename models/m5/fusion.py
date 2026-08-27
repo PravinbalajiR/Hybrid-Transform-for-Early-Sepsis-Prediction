@@ -84,13 +84,23 @@ class TemporalAttentionPooling(nn.Module):
         -------
         (enhanced_x, attention_scores)
         """
+        batch_size, seq_len, d_model = x.size()
         scores = self.attn_score(x).squeeze(-1) # [batch, seq_len]
         
         if padding_mask is not None:
             scores = scores.masked_fill(padding_mask, float('-inf'))
             
-        attn_weights = F.softmax(scores, dim=-1).unsqueeze(-1) # [batch, seq_len, 1]
+        # Causal mask: position t can only attend to 0..t
+        causal_mask = torch.triu(torch.full((seq_len, seq_len), float('-inf'), device=x.device), diagonal=1)
+        
+        # Expand scores for causal pairwise weighting: [batch, seq_len, seq_len]
+        # (row t contains scores for timesteps 0..seq_len-1)
+        scores_matrix = scores.unsqueeze(1).expand(-1, seq_len, -1) + causal_mask.unsqueeze(0)
+        attn_weights_matrix = F.softmax(scores_matrix, dim=-1) # [batch, seq_len, seq_len]
+        
+        # Causal weighted sum over time 0..t for each position t
+        pooled = torch.bmm(attn_weights_matrix, x) # [batch, seq_len, d_model]
         
         # Residual enhancement
-        enhanced = x + attn_weights * x
-        return enhanced, attn_weights.squeeze(-1)
+        enhanced = x + pooled
+        return enhanced, attn_weights_matrix.diagonal(dim1=1, dim2=2)

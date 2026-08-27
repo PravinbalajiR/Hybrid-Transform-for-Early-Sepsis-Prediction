@@ -35,18 +35,31 @@ class CausalConv1d(nn.Module):
         return out
 
 
+class ChannelLayerNorm(nn.Module):
+    """LayerNorm across channels for 1D convolutions without cross-timestep leakage."""
+    def __init__(self, num_channels: int):
+        super().__init__()
+        self.ln = nn.LayerNorm(num_channels)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        # x: [batch, channels, seq_len] -> transpose -> [batch, seq_len, channels]
+        x_t = x.transpose(1, 2)
+        out = self.ln(x_t)
+        return out.transpose(1, 2)
+
+
 class LocalTemporalExpert(nn.Module):
     """Causal TCN for capturing short-term local physiological shifts (e.g. rapid vital spikes)."""
     
     def __init__(self, in_dim: int = 64, hidden_dim: int = 64, kernel_size: int = 3, dropout: float = 0.1):
         super().__init__()
         self.conv1 = CausalConv1d(in_dim, hidden_dim, kernel_size=kernel_size, dilation=1)
-        self.gn1 = nn.GroupNorm(4, hidden_dim)
+        self.ln1 = ChannelLayerNorm(hidden_dim)
         self.act1 = nn.GELU()
         self.drop1 = nn.Dropout(dropout)
         
         self.conv2 = CausalConv1d(hidden_dim, hidden_dim, kernel_size=kernel_size, dilation=2)
-        self.gn2 = nn.GroupNorm(4, hidden_dim)
+        self.ln2 = ChannelLayerNorm(hidden_dim)
         self.act2 = nn.GELU()
         self.drop2 = nn.Dropout(dropout)
         
@@ -58,8 +71,8 @@ class LocalTemporalExpert(nn.Module):
         h = x.transpose(1, 2)
         
         res = h
-        h = self.drop1(self.act1(self.gn1(self.conv1(h))))
-        h = self.drop2(self.act2(self.gn2(self.conv2(h))))
+        h = self.drop1(self.act1(self.ln1(self.conv1(h))))
+        h = self.drop2(self.act2(self.ln2(self.conv2(h))))
         h = h + res  # Residual connection
         
         # Transpose back: [batch, seq_len, hidden_dim]

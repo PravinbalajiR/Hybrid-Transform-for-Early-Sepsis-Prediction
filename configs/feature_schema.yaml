@@ -1,0 +1,68 @@
+# configs/feature_schema.yaml
+# Canonical Feature Schema Definition for Early Sepsis Prediction
+
+schema_name: "PhysioNet2019_Canonical_34"
+version: "2.0.0"
+
+vital_signs:
+  - HR        # Heart Rate (bpm)
+  - O2Sat     # Pulse Oximetry (%)
+  - Temp      # Temperature (deg C)
+  - SBP       # Systolic Blood Pressure (mmHg)
+  - MAP       # Mean Arterial Pressure (mmHg)
+  - DBP       # Diastolic Blood Pressure (mmHg)
+  - Resp      # Respiration Rate (breaths/min)
+  - EtCO2     # End-Tidal CO2 (mmHg)
+
+laboratory_variables:
+  - BaseExcess
+  - HCO3
+  - FiO2
+  - pH
+  - PaCO2
+  - SaO2
+  - AST
+  - BUN
+  - Alkalinephos
+  - Calcium
+  - Chloride
+  - Creatinine
+  - Bilirubin_direct
+  - Glucose
+  - Lactate
+  - Magnesium
+  - Phosphate
+  - Potassium
+  - Bilirubin_total
+  - TroponinI
+  - Hct
+  - Hgb
+  - PTT
+  - WBC
+  - Fibrinogen
+  - Platelets
+
+demographics:
+  - Age
+  - Gender
+  - Unit1
+  - Unit2
+  - HospAdmTime
+  - ICULOS
+
+derived_variables:
+  ShockIndex:
+    formula: "HR / (SBP + 1e-5)"
+    base_vars: ["HR", "SBP"]
+    clip_min: 0.0
+    clip_max: 5.0
+  PulsePressure:
+    formula: "SBP - DBP"
+    base_vars: ["SBP", "DBP"]
+    clip_min: 0.0
+    clip_max: 150.0
+
+feature_counts:
+  num_raw_features: 34
+  triplet_multiplier: 3
+  total_triplet_dim: 102

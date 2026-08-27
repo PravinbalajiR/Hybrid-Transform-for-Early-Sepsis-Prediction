@@ -1,0 +1,11 @@
+\begin{tabular}{lrll}
+\toprule
+Feature Group & Feature Count & Input Representation & Missingness Handling \\
+\midrule
+Vital Signs & 8 & Values v(t) & Mean Zero-Imputed \\
+Laboratory Variables & 20 & Values v(t) & Mean Zero-Imputed \\
+Demographics & 6 & Static Demographics & Complete \\
+Causal Dynamics & 68 & Velocity v' & Acceleration v'' & Causal Backward Difference \\
+Temporal Reliability & 34 & R_j(t) = exp(-gamma_j * dt_j) & Decay Exponential \\
+\bottomrule
+\end{tabular}

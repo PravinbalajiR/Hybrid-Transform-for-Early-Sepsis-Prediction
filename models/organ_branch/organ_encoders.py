@@ -73,7 +73,8 @@ class TemporalOrganEncoder(nn.Module):
         )
         # padding=2 on kernel=3 gives L+2. We'll slice the first L to make it causal
         
-        self.gru = nn.GRU(hidden_dim, d_model // 2, batch_first=True, bidirectional=True)
+        # Causal GRU (unidirectional to prevent future leakage)
+        self.gru = nn.GRU(hidden_dim, d_model, batch_first=True, bidirectional=False)
         self.pool = OrganAttentionPool(d_model)
         
         self.norm = nn.LayerNorm(d_model)
@@ -122,14 +123,6 @@ class PhysiologyAwareTemporalEncoders(nn.Module):
             "metabolic": 4,      # Lactate slope, pH, Lactate, BaseExcess
             "temperature": 1,    # Temp
         }
-        
-        # For each organ, we add the Mask and Delta for its base variables
-        # Cardio base vars: HR, SBP, MAP, DBP -> 4 * 2 = 8 mask/delta features
-        # Respiratory: O2Sat, Resp -> 2 * 2 = 4
-        # Renal: Creatinine, BUN -> 2 * 2 = 4
-        # Liver: AST, Bilirubin_total -> 2 * 2 = 4
-        # Metabolic: Lactate, pH, BaseExcess -> 3 * 2 = 6
-        # Temperature: Temp -> 1 * 2 = 2
         
         self.mask_delta_dims = {
             "cardiovascular": 8,
@@ -182,7 +175,8 @@ class PhysiologyAwareTemporalEncoders(nn.Module):
         temp = x[:, :, get_idx("Temp")]
         
         # --- Cardio ---
-        shock_index = hr - sbp
+        # Correct Shock Index calculation: HR / (SBP + 1e-5) clipped to [0, 5]
+        shock_index = torch.clamp(hr / (torch.abs(sbp) + 1e-5), min=0.0, max=5.0)
         pulse_pressure = sbp - dbp
         map_slope = compute_slope(map_)
         # Base features

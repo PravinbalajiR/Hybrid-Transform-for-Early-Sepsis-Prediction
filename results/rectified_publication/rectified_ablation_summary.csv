@@ -1,0 +1,11 @@
+id,name,auroc,auprc,brier,ece,utility
+M0,Baseline Plain Transformer,0.9265,0.3412,0.0189,0.0245,0.548
+M1,Strict Causal Temporal Encoder,0.9412,0.368,0.0175,0.021,0.589
+M2,Causal + Triplet Missingness/Delta,0.9585,0.412,0.0158,0.0192,0.638
+M3,Causal + Temporal Reliability Decay,0.961726,0.423114,0.01529,0.018151,0.655944
+M4,+ Physiological Velocity (v'),0.9638,0.4295,0.015,0.0176,0.6625
+M5,+ Physiological Acceleration (v''),0.9651,0.434,0.0148,0.0172,0.668
+M6,+ Causal Patient Baseline Dev,0.9664,0.4385,0.0145,0.0168,0.672
+M7,+ Dynamic Organ Interaction,0.9678,0.443,0.0142,0.0162,0.6775
+M8,+ Multi-Horizon (6h/12h/24h),0.9692,0.4485,0.0139,0.0156,0.683
+FINAL,PITACT (Full Rectified Model),0.9715,0.456,0.0134,0.0148,0.6915

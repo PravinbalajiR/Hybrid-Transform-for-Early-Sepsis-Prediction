@@ -72,6 +72,10 @@ class TACTModel(nn.Module):
             nn.Linear(32, 1),
         )
 
+    def _generate_causal_mask(self, seq_len: int, device: torch.device) -> torch.Tensor:
+        # Upper triangular mask with -inf above diagonal to prevent looking into the future (t' > t)
+        return torch.triu(torch.full((seq_len, seq_len), float('-inf'), device=device), diagonal=1)
+
     def forward(
         self,
         x: torch.Tensor,                          # (B, T, input_dim)
@@ -88,9 +92,10 @@ class TACTModel(nn.Module):
         # 1. Project and add positional encoding -> (B, T, d_model)
         h = self.embedding(x)
 
-        # 2. Pass through Transformer Encoder
-        # PyTorch src_key_padding_mask expects True at padded positions
-        h_out = self.transformer_encoder(h, src_key_padding_mask=padding_mask)
+        # 2. Pass through Transformer Encoder with Causal Mask
+        seq_len = h.size(1)
+        causal_mask = self._generate_causal_mask(seq_len, h.device)
+        h_out = self.transformer_encoder(h, mask=causal_mask, src_key_padding_mask=padding_mask)
 
         # 3. Compute per-hour logits -> (B, T)
         logits = self.fc_out(h_out).squeeze(-1)

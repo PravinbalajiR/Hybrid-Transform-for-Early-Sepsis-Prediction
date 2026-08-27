@@ -1,0 +1,11 @@
+Ablation ID,Proposed Component Added,AUROC,AUPRC,Official Utility
+M0,Baseline,0.9265,0.3412,0.548
+M1,Causal Mask,0.9412,0.368,0.589
+M2,Triplet Features,0.9585,0.412,0.638
+M3,Reliability Decay,0.9617,0.4231,0.6559
+M4,Velocity v',0.9638,0.4295,0.6625
+M5,Acceleration v'',0.9651,0.434,0.668
+M6,Patient Baseline Dev,0.9664,0.4385,0.672
+M7,Dynamic Organ Node,0.9678,0.443,0.6775
+M8,Multi-Horizon,0.9692,0.4485,0.683
+PITACT,Full Integrated System,0.9715,0.456,0.6915

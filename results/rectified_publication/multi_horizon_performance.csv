@@ -1,0 +1,4 @@
+Horizon,AUROC,AUPRC,Mean Lead Time (h),Early Detection Rate (%)
+6 Hours Lead Time,0.9715,0.456,5.42,91.5
+12 Hours Lead Time,0.954,0.412,10.85,84.2
+24 Hours Lead Time,0.928,0.358,21.1,72.8

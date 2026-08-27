@@ -1,0 +1,3 @@
+Cohort,Hospital System,Dataset Role,Total ICU Stays,Septic Stays,Non-Septic Stays,Sepsis Prevalence (%),Hourly Observations
+BIDMC Development (Set A),Beth Israel Deaconess Medical Center,Development (Train + Val),20336,1790,18546,8.8,790215
+Emory External Test (Set B),Emory University Hospital,Held-Out External Testing,20000,1066,18934,5.33,753927
