@@ -1,0 +1,11 @@
+\begin{tabular}{lllll}
+\toprule
+Model ID & Architecture Name & Temporal Component & Input Feature Set & Evaluation Role \\
+\midrule
+M1 & XGBoost Baseline & Static aggregation & Values + Summary & Classical Baseline \\
+M2 & Plain Transformer & Standard Positional & Values Only v(t) & Plain Transformer Baseline \\
+M3 & Time-Aware Transformer & Time2Vec Delta Encodings & Values + Mask + Delta (v, m, dt) & Primary Frozen Architecture \\
+M4 & Organ-Aware Hybrid & Organ-wise Temporal & Organ Sub-nets + Triplet & Over-parameterized Variant \\
+M5 & Multi-Hybrid MoE & Dynamic MoE Routing & Multi-Expert Routing & Mixture-of-Experts Variant \\
+\bottomrule
+\end{tabular}
