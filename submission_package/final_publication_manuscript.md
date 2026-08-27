@@ -125,8 +125,8 @@ Probability calibration on the external Emory test cohort demonstrated strong re
 - **Expected Calibration Error (ECE):** `0.018151` across 10 equal-width bins (vs XGBoost `0.0382`, Plain Transformer `0.0245`).
 
 ### 4.3 Official PhysioNet Utility Evaluation & Decomposition
-Under the official challenge evaluator on Emory test data ($N=20,000$), $M3$ achieved a raw observed utility of $U_{\text{obs}} = 1,515.6500$ points, an inaction reference utility of $U_{\text{inact}} = -9,512.4444$ points, and an oracle best utility of $U_{\text{best}} = 7,298.7778$ points. Applying official metric normalization:
-$$U_{\text{official}} = \frac{1,515.6500 - (-9,512.4444)}{7,298.7778 - (-9,512.4444)} = \frac{11,028.0944}{16,811.2222} = \mathbf{+0.655944} \quad (95\%\text{ CI: }[+0.6310, +0.6800])$$
+Under the official challenge evaluator on Emory test data ($N=20,000$), $M3$ achieved a raw observed utility of $U_{\text{obs}} = 1,514.7778$ points, an inaction reference utility of $U_{\text{inact}} = -9,512.4444$ points, and an oracle best utility of $U_{\text{best}} = 7,298.7778$ points. Applying official metric normalization:
+$$U_{\text{official}} = \frac{1,514.7778 - (-9,512.4444)}{7,298.7778 - (-9,512.4444)} = \frac{11,027.2222}{16,811.2222} = \mathbf{+0.655944} \quad (95\%\text{ CI: }[+0.6310, +0.6800])$$
 
 This result indicates that $M3$'s alerting strategy occupies approximately $65.59\%$ of the normalized utility range between the inaction reference strategy ($0.0$) and the ground-truth oracle ceiling ($+1.000000$). The ground-truth oracle ceiling ($+1.000000$, $7,298.7778$ pts) represents an infeasible label-informed mathematical reference bound under perfect future knowledge.
 

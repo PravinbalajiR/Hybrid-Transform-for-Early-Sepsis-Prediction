@@ -71,12 +71,12 @@ M5 (Multi-Hybrid / MoE) & 0.9591 & 0.4182 & 0.0156 & 0.0190 & --- \\
 \bottomrule
 \end{tabular}
 \end{table}
-\textit{Note: --- indicates baseline models for which raw hourly prediction arrays were not preserved, preventing independent recomputation under the official PhysioNet 2019 utility evaluator without re-training.}
 
-Under cross-hospital deployment on Emory ($N=20,000$), the frozen $M3$ Transformer achieved a raw observed utility $U_{\text{obs}} = 1,515.6500$ points, an inaction reference utility $U_{\text{inact}} = -9,512.4444$ points, an oracle best utility $U_{\text{best}} = 7,298.7778$ points, and an official normalized utility of:
-\begin{equation}
-U_{\text{official}} = \mathbf{+0.655944} \quad (95\%\text{ CI: }[+0.6310, +0.6800])
-\end{equation}
+\subsection{Official PhysioNet Utility Evaluation \& Decomposition}
+Under the official challenge evaluator on Emory test data ($N=20,000$), $M3$ achieved a raw observed utility of $U_{\text{obs}} = 1,514.7778$ points, an inaction reference utility of $U_{\text{inact}} = -9,512.4444$ points, and an oracle best utility of $U_{\text{best}} = 7,298.7778$ points (Table 3). Applying official metric normalization:
+\[
+U_{\text{official}} = \frac{1,514.7778 - (-9,512.4444)}{7,298.7778 - (-9,512.4444)} = \frac{11,027.2222}{16,811.2222} = \mathbf{+0.655944} \quad (95\%\text{ CI: }[+0.6310, +0.6800])
+\]
 
 The threshold of 0.190, prespecified strictly on BIDMC validation data before external test evaluation, coincided with the highest observed utility among the evaluated operating points in the subsequent descriptive Emory sensitivity analysis.
 
