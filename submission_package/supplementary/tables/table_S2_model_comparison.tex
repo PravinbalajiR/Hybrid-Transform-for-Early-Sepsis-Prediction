@@ -1,0 +1,11 @@
+\begin{tabular}{lllllll}
+\toprule
+Model Variant & AUROC & AUPRC & Brier Score & ECE & Official Utility & Parameter Count \\
+\midrule
+M1 (XGBoost Baseline) & 0.884200 & 0.285100 & 0.024100 & 0.038200 & — & 1.2M \\
+M2 (Plain Transformer) & 0.926500 & 0.341200 & 0.018900 & 0.024500 & — & 115K \\
+M3 (Time-Aware Transformer) & 0.961726 & 0.423114 & 0.015290 & 0.018151 & +0.655944 & 116K \\
+M4 (Organ-Aware Hybrid) & 0.958200 & 0.415000 & 0.015800 & 0.019500 & — & 320K \\
+M5 (Multi-Hybrid MoE) & 0.959100 & 0.418200 & 0.015600 & 0.019000 & — & 450K \\
+\bottomrule
+\end{tabular}
