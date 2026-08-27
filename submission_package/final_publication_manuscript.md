@@ -242,6 +242,8 @@ The model architecture implementations, feature preprocessing pipelines, and off
 
 **Author Contributions:** Pravin Balaji R (PBR) conducted software implementation, architecture development, model training, and technical evaluation. Vishal D (VD) contributed to manuscript preparation, literature review, and writing.
 
+**Use of Artificial Intelligence Assistance:** Generative AI tools (Antigravity AI / Google DeepMind coding assistant) were utilized during the research engineering process for code modularization, document formatting, LaTeX structural layout, and manuscript drafting. All statistical modeling, dataset splits, model training, prediction generation, and scientific interpretations were conducted, verified, and approved independently by the human authors (Pravin Balaji R and Vishal D). The AI tools did not generate or alter any empirical data, cohort ground truths, or experimental results.
+
 **Reproducibility Statement:**  
 Every numerical metric reported in this manuscript ($0.961726$ AUROC, $0.423114$ AUPRC, $0.015290$ Brier, $0.018151$ ECE, $+0.655944$ Official Utility, $18.81\%$ PPV, $16.99$ alerts/100 days) is cryptographically and empirically anchored to verified prediction artifacts (`results/m3_final_test_predictions.npz`), frozen model checkpoints (`experiments/final_m3_frozen/best_m3_frozen.pt`), source JSON split manifests (`train_ids.json`, `val_ids.json`, `test_ids.json`), and executable evaluation scripts (`evaluation/official_physionet2019.py`, `scripts/run_multiseed_stability_check.py`).
 
