@@ -21,7 +21,7 @@ This document presents an automated numerical cross-check comparing every value 
 | **Figure 3A** | M3 Brier Score | $0.015290$ | `results/m3_final_test_predictions.npz` | $0.015290$ | **`PASS`** |
 | **Figure 3A** | M3 ECE (10 Bins) | $0.018151$ | `results/m3_final_test_predictions.npz` | $0.018151$ | **`PASS`** |
 | **Figure 4** | Prespecified Utility ($th=0.190$) | $+0.655944$ | `evaluation/official_physionet2019.py` | $+0.655944$ | **`PASS`** |
-| **Figure 4** | Raw Observed Utility ($U_{\text{obs}}$) | $1,515.6500$ | `evaluation/official_physionet2019.py` | $1,515.6500$ | **`PASS`** |
+| **Figure 4** | Raw Observed Utility ($U_{\text{obs}}$) | $1,514.78$ | `evaluation/official_physionet2019.py` | $1,514.78$ | **`PASS`** |
 | **Figure 4** | Inaction Utility ($U_{\text{inact}}$) | $-9,512.4444$ | `evaluation/official_physionet2019.py` | $-9,512.4444$ | **`PASS`** |
 | **Figure 4** | Oracle Best Utility ($U_{\text{best}}$) | $7,298.7778$ | `evaluation/official_physionet2019.py` | $7,298.7778$ | **`PASS`** |
 | **Figure 5A** | Total Alerts Issued | $5,337$ | `results/revised_publication/workload_operational_metrics.csv` | $5,337$ | **`PASS`** |

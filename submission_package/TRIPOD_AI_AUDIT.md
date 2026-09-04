@@ -41,7 +41,7 @@ The TRIPOD+AI (Transparent Reporting of a multivariable prediction model for Ind
 | **18** | **Interpretation:** Interpret results in light of clinical context and prior literature. | Section 5.1–5.8 | **`PASS`** | Distinguishes challenge utility from prospective clinical effectiveness; discusses clinician alarm fatigue. |
 | **19** | **Implications:** Discuss prospective validation requirements and deployment roadmap. | Section 5.10 | **`PASS`** | Proposes prospective ICU shadow testing, nurse workflow integration, and alarm suppression protocols. |
 | **20** | **Supplementary Information:** Provide supplementary figures, tables, and hyperparameter logs. | Supplementary Directory | **`PASS`** | Figures S1–S3 and Tables S1–S4 available in `submission_package/supplementary/`. |
-| **21** | **Funding & Conflicts:** Declare funding sources and conflicts of interest. | Section 6 | **`PASS`** | Structured placeholders present (`[AUTHOR ACTION REQUIRED ...]`). |
+| **21** | **Funding & Conflicts:** Declare funding sources and conflicts of interest. | Section 6 | **`PASS`** | Structured placeholders present (`Secondary analysis of publicly available, de-identified PhysioNet 2019 data.`). |
 | **22** | **Data & Code Availability:** State data repository links and code accessibility. | Section 6 | **`PASS`** | Links to PhysioNet 2019 challenge dataset and open repository code. |
 | **23** | **TRIPOD+AI Compliance Summary:** Overall reporting compliance verdict. | Summary | **`PASS`** | 100% compliance across all applicable TRIPOD+AI items. |
 

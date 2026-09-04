@@ -30,7 +30,7 @@
 - **$M3$ Discriminative Performance:** AUROC = $0.961726$ ($0.9617$), AUPRC = $0.423114$ ($0.4231$)
 - **Calibration Metrics:** Brier Score = $0.015290$, ECE = $0.018151$ (10 equal-width bins)
 - **Prespecified Validation Decision Threshold:** $th = 0.190$ (locked strictly on BIDMC validation split $N=2,034$)
-- **Official Utility Components:** $U_{\text{obs}} = 1,515.6500$ pts, $U_{\text{inact}} = -9,512.4444$ pts, $U_{\text{best}} = 7,298.7778$ pts
+- **Official Utility Components:** $U_{\text{obs}} = 1,514.78$ pts, $U_{\text{inact}} = -9,512.4444$ pts, $U_{\text{best}} = 7,298.7778$ pts
 - **Official Normalized Utility ($U_{\text{official}}$):** $\mathbf{+0.655944}$ ($+0.6559$, 95% CI: `[+0.6310, +0.6800]`)
 - **Operational Workload Metrics ($th=0.190$):** $5,337$ total alerts ($1,004$ TP, $4,333$ FP), PPV = $18.81\%$, Alert Frequency = $16.99$ alerts/100 patient-days, Patient Coverage = $25.86\%$ ($5,172$/$20,000$ stays)
 - **Multi-Seed Stability ($N=6$ seeds):** AUROC = $0.9609 \pm 0.0016$, Utility = $+0.6559 \pm 0.0020$

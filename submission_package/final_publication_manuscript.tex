@@ -105,4 +105,95 @@ M3 achieved positive normalized utility (+0.655944) under the official PhysioNet
 
 \textbf{Reproducibility Statement:} Every numerical metric reported in this manuscript ($0.961726$ AUROC, $0.423114$ AUPRC, $0.015290$ Brier, $0.018151$ ECE, $+0.655944$ Official Utility, $18.81\%$ PPV, $16.99$ alerts/100 days) is cryptographically and empirically anchored to verified prediction artifacts (\texttt{results/m3\_final\_test\_predictions.npz}), frozen model checkpoints (\texttt{experiments/final\_m3\_frozen/best\_m3\_frozen.pt}), source JSON split manifests (\texttt{train\_ids.json}, \texttt{val\_ids.json}, \texttt{test\_ids.json}), and executable evaluation scripts (\texttt{evaluation/official\_physionet2019.py}, \texttt{scripts/run\_multiseed\_stability\_check.py}).
 
+\clearpage
+\section*{Figures}
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=0.9\textwidth]{figures/Figure_1_study_design.pdf}
+\caption{Figure 1 — Study Design Framework}
+\end{figure}
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=0.9\textwidth]{figures/Figure_2_discrimination.pdf}
+\caption{Figure 2 — ROC \& PR Curves}
+\end{figure}
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=0.9\textwidth]{figures/Figure_3_calibration.pdf}
+\caption{Figure 3 — Calibration \& Reliability}
+\end{figure}
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=0.9\textwidth]{figures/Figure_4_utility_threshold.pdf}
+\caption{Figure 4 — Utility vs Threshold}
+\end{figure}
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=0.9\textwidth]{figures/Figure_5_alert_burden.pdf}
+\caption{Figure 5 — Operational Alert Burden}
+\end{figure}
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=0.9\textwidth]{figures/Figure_6_cross_hospital.pdf}
+\caption{Figure 6 — Cross-Hospital Shift}
+\end{figure}
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=0.9\textwidth]{figures/Figure_7_robustness.pdf}
+\caption{Figure 7 — Multi-Seed Robustness}
+\end{figure}
+
+\clearpage
+\section*{Supplementary Figures}
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=0.9\textwidth]{supplementary/figures/Figure_S1_factorial_ablation.pdf}
+\caption{Figure S1 — Factorial Ablation}
+\end{figure}
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=0.9\textwidth]{supplementary/figures/Figure_S2_threshold_grid.pdf}
+\caption{Figure S2 — Threshold Grid}
+\end{figure}
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=0.9\textwidth]{supplementary/figures/Figure_S3_model_progression.pdf}
+\caption{Figure S3 — Model Progression}
+\end{figure}
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=0.9\textwidth]{supplementary/figures/Figure_S4_confusion_matrix.pdf}
+\caption{Figure S4 — Descriptive Hourly Confusion Matrix}
+\end{figure}
+
+\clearpage
+\section*{Tables}
+
+\input{../tables/table01_cohort_characteristics.tex}
+\input{../tables/table02_model_family.tex}
+\input{../tables/table03_predictive_performance.tex}
+\input{../tables/table04_operational_performance.tex}
+\input{../tables/table05_operational_burden.tex}
+\input{../tables/table06_factorial_ablation.tex}
+\input{../tables/table07_reproducibility_manifest.tex}
+
+\clearpage
+\section*{Supplementary Tables}
+
+\input{supplementary/tables/table_S1_detailed_cohort.tex}
+\input{supplementary/tables/table_S2_model_comparison.tex}
+\input{supplementary/tables/table04_threshold_sensitivity.tex}
+
 \end{document}
+

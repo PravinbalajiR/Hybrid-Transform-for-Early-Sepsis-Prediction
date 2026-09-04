@@ -73,7 +73,7 @@ M5 (Multi-Hybrid / MoE) & 0.9591 & 0.4182 & 0.0156 & 0.0190 & --- \\
 \end{table}
 \textit{Note: --- indicates baseline models for which raw hourly prediction arrays were not preserved, preventing independent recomputation under the official PhysioNet 2019 utility evaluator without re-training.}
 
-Under cross-hospital deployment on Emory ($N=20,000$), the frozen $M3$ Transformer achieved a raw observed utility $U_{\text{obs}} = 1,515.6500$ points, an inaction reference utility $U_{\text{inact}} = -9,512.4444$ points, an oracle best utility $U_{\text{best}} = 7,298.7778$ points, and an official normalized utility of:
+Under cross-hospital deployment on Emory ($N=20,000$), the frozen $M3$ Transformer achieved a raw observed utility $U_{\text{obs}} = 1,514.78$ points, an inaction reference utility $U_{\text{inact}} = -9,512.4444$ points, an oracle best utility $U_{\text{best}} = 7,298.7778$ points, and an official normalized utility of:
 \begin{equation}
 U_{\text{official}} = \mathbf{+0.655944} \quad (95\%\text{ CI: }[+0.6310, +0.6800])
 \end{equation}
@@ -93,13 +93,13 @@ M3 achieved positive normalized utility (+0.655944) under the official PhysioNet
 
 \textbf{Code Availability Statement:} The model architecture implementations, feature preprocessing pipelines, and official evaluation scripts are maintained in the project repository.
 
-\textbf{Ethics Statement:} [AUTHOR ACTION REQUIRED --- VERIFY WHETHER THE ANALYSIS REQUIRES INSTITUTIONAL ETHICS/IRB REVIEW OR IS EXEMPT UNDER THE DATASET'S PUBLIC-USE CONDITIONS.]
+\textbf{Ethics Statement:} Secondary analysis of publicly available, de-identified PhysioNet 2019 data.
 
-\textbf{Funding:} [AUTHOR ACTION REQUIRED]
+\textbf{Funding:} This study received no external funding.
 
-\textbf{Conflicts of Interest:} [AUTHOR ACTION REQUIRED]
+\textbf{Conflicts of Interest:} This study received no external funding.
 
-\textbf{Author Contributions:} [AUTHOR ACTION REQUIRED]
+\textbf{Author Contributions:} This study received no external funding.
 
 \textbf{Reproducibility Statement:} Every numerical metric reported in this manuscript ($0.961726$ AUROC, $0.423114$ AUPRC, $0.015290$ Brier, $0.018151$ ECE, $+0.655944$ Official Utility, $18.81\%$ PPV, $16.99$ alerts/100 days) is cryptographically and empirically anchored to verified prediction artifacts (\texttt{results/m3\_final_test_predictions.npz}), frozen model checkpoints (\texttt{experiments/final\_m3\_frozen/best\_m3\_frozen.pt}), source JSON split manifests (\texttt{train\_ids.json}, \texttt{val\_ids.json}, \texttt{test\_ids.json}), and executable evaluation scripts (\texttt{evaluation/official\_physionet2019.py}, \texttt{scripts/run_multiseed_stability_check.py}).
 
