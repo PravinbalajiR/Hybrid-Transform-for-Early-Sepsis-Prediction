@@ -67,7 +67,7 @@ This illustrates why workload auditing is important before prospective clinical 
 \section*{Discussion}
 M3 achieved positive normalized utility (+0.655944) under the official PhysioNet 2019 utility function on an independent external Emory cohort, indicating that its alerting behavior generated net utility relative to the inactive reference strategy under the challenge's predefined scoring framework. This score represents performance under a predefined challenge decision-cost function and should not be interpreted as direct evidence of prospective clinical effectiveness, clinical benefit, or cost-effectiveness. Our findings demonstrate that decision-theoretic evaluation and workload auditing are essential prior to clinical deployment.
 
-Our study has several important limitations. First, the evaluation relies on a single retrospective external cohort (PhysioNet Set B / Emory). Although this provides a robust cross-hospital benchmark, prospective clinical validation across diverse hospital systems is required before deployment. Second, while our model explicitly optimizes for alert utility and false-positive reduction using the official PhysioNet Challenge metric, operational threshold dependence remains high, requiring institutional calibration. Third, our current architecture (M3) focuses on irregular physiological measurements and missingness but does not explicitly model clinical interventions or treatment-aware counterfactuals. Fourth, we found that dynamic organ-interaction mechanisms (e.g., M5) did not yield statistically significant improvement over M3 ($p=0.068$), suggesting that simple temporal representations of time-deltas and missingness may be sufficient for this specific task, but more advanced architectures might be necessary for broader clinical forecasting. In conclusion, high discrimination does not necessarily translate into high clinical or operational utility, and strict temporal causal validation combined with workload auditing remains critical for responsible clinical AI deployment.
+Our study has several important limitations. First, the evaluation relies on a single retrospective external cohort (PhysioNet Set B / Emory). Although this provides a robust cross-hospital benchmark, prospective clinical validation across diverse hospital systems is required before deployment. Second, while our model explicitly optimizes for alert utility and false-positive reduction using the official PhysioNet Challenge metric, operational threshold dependence remains high, requiring institutional calibration. Third, our current architecture (M3) focuses on irregular physiological measurements and missingness \cite{ref:che2018} but does not explicitly model clinical interventions or treatment-aware counterfactuals. Fourth, we found that dynamic organ-interaction mechanisms (e.g., M5) did not yield statistically significant improvement over M3 ($p=0.068$), suggesting that simple temporal representations of time-deltas and missingness may be sufficient for this specific task, but more advanced architectures might be necessary for broader clinical forecasting. In conclusion, high discrimination does not necessarily translate into high clinical or operational utility, and strict temporal causal validation combined with workload auditing remains critical for responsible clinical AI deployment.
 
 \section*{Methods}
 We evaluated a structured family of predictive architectures: XGBoost ($M1$), Plain Transformer ($M2$), Time-Aware Transformer ($M3$), Organ-Aware Hybrid ($M4$), and Multi-Hybrid Mixture-of-Experts ($M5$).
@@ -112,25 +112,25 @@ U_{\text{official}} = \frac{U_{\text{observed}} - U_{\text{inaction}}}{U_{\text{
 \section*{References}
 \begin{thebibliography}{10}
 
-\bibitem{ref:jcrc2024} % Elsevier 1
+\bibitem{ref:jcrc2024} 
 Author(s). `Early prediction of sepsis in intensive care patients using the machine learning algorithm NAVOY\textregistered~Sepsis, a prospective randomized clinical validation study.'' \textit{Journal of Critical Care} (Elsevier), 2024. DOI: 10.1016/j.jcrc.2023.154400.
 
-\bibitem{ref:jhep2026} % Elsevier 2
+\bibitem{ref:jhep2026} 
 Author(s). `SAT-480 Beyond MELD: machine learning mortality prediction in cirrhotic patients with sepsis.'' \textit{Journal of Hepatology} (Elsevier), 2026. DOI: 10.1016/s0168-8278(26)00620-3.
 
-\bibitem{ref:jcrc2024_2} % Elsevier 3
+\bibitem{ref:jcrc2024_2} 
 Author(s). `The prediction power of machine learning on estimating the sepsis mortality at intensive care unit.'' \textit{Journal of Critical Care} (Elsevier), 2024. DOI: 10.1016/j.jcrc.2024.154720.
 
-\bibitem{ref:ibmed2026} % Elsevier 4
+\bibitem{ref:ibmed2026} 
 Author(s). `Early prediction of sepsis infection risk for intensive care unit patients using machine learning based approach.'' \textit{Intelligence-Based Medicine} (Elsevier), 2026. DOI: 10.1016/j.ibmed.2026.100403.
 
-\bibitem{ref:engmed2026} % Elsevier 5
+\bibitem{ref:engmed2026} 
 Author(s). `A machine learning model for mortality risk prediction of sepsis patients based on the medical information mart for intensive care III database.'' \textit{EngMedicine} (Elsevier), 2026. DOI: 10.1016/j.engmed.2025.100118.
 
-\bibitem{ref:signavitae2025} % Other 1
+\bibitem{ref:signavitae2025} 
 Author(s). `Early sepsis prediction in elderly patients with urinary tract infections: a machine learning.'' \textit{Signa Vitae}, 2025. DOI: 10.22514/sv.2025.161.
 
-\bibitem{ref:info17050430} % Other 2
+\bibitem{ref:info17050430} 
 Author(s). `From Data to Diagnosis: A Machine Learning-Enabled Framework for Early Sepsis Prediction and Prevention.'' \textit{Information} (MDPI), 2026. DOI: 10.3390/info17050430.
 
 \bibitem{ref:ijwm2026} % Other 3
@@ -142,6 +142,19 @@ Author(s). `Approaching machine learning for length of stay prediction in sepsis
 \bibitem{ref:saupress2025} % Other 5
 Author(s). `Artificial Intelligence and Machine Learning in Sepsis Detection and Risk Prediction: Big Data, Real-Time Surveillance, and Predictive Analytics in Sepsis Care.'' \textit{Precision Medicine in Sepsis}, 2025. DOI: 10.59537/saupress.2494.
 
+
+\bibitem{ref:vaswani2017}
+Vaswani, A., Shazeer, N., Parmar, N., Uszkoreit, J., Jones, L., et al. `Attention is all you need.'' \textit{Advances in Neural Information Processing Systems}, 2017.
+
+\bibitem{ref:che2018}
+Che, Z., Purushotham, S., Cho, K., Sontag, D. \& Liu, Y. `Recurrent neural networks for multivariate time series with missing values.'' \textit{Scientific Reports}, 2018. DOI: 10.1038/s41598-018-24271-9.
+
+\bibitem{ref:guo2017}
+Guo, C., Pleiss, G., Sun, Y. \& Weinberger, K. Q. `On calibration of modern neural networks.'' \textit{International Conference on Machine Learning}, 2017.
+
+\bibitem{ref:vickers2006}
+Vickers, A. J. \& Elkin, E. B. `Decision curve analysis: a novel method for evaluating prediction models.'' \textit{Medical Decision Making}, 2006. DOI: 10.1177/0272989X06295361.
+
 \end{thebibliography}
 
 
@@ -150,43 +163,43 @@ Author(s). `Artificial Intelligence and Machine Learning in Sepsis Detection and
 \begin{figure}[h!]
 \centering
 \includegraphics[width=0.9\textwidth]{figures/Figure_1_study_design.pdf}
-\caption{Figure 1 — Study Design Framework}
+\caption{Figure 1  Study Design Framework}
 \end{figure}
 
 \begin{figure}[h!]
 \centering
 \includegraphics[width=0.9\textwidth]{figures/Figure_2_discrimination.pdf}
-\caption{Figure 2 — ROC \& PR Curves}
+\caption{Figure 2  ROC \& PR Curves}
 \end{figure}
 
 \begin{figure}[h!]
 \centering
 \includegraphics[width=0.9\textwidth]{figures/Figure_3_calibration.pdf}
-\caption{Figure 3 — Calibration \& Reliability}
+\caption{Figure 3  Calibration \& Reliability}
 \end{figure}
 
 \begin{figure}[h!]
 \centering
 \includegraphics[width=0.9\textwidth]{figures/Figure_4_utility_threshold.pdf}
-\caption{Figure 4 — Utility vs Threshold}
+\caption{Figure 4  Utility vs Threshold}
 \end{figure}
 
 \begin{figure}[h!]
 \centering
 \includegraphics[width=0.9\textwidth]{figures/Figure_5_alert_burden.pdf}
-\caption{Figure 5 — Operational Alert Burden}
+\caption{Figure 5  Operational Alert Burden}
 \end{figure}
 
 \begin{figure}[h!]
 \centering
 \includegraphics[width=0.9\textwidth]{figures/Figure_6_cross_hospital.pdf}
-\caption{Figure 6 — Cross-Hospital Shift}
+\caption{Figure 6  Cross-Hospital Shift}
 \end{figure}
 
 \begin{figure}[h!]
 \centering
 \includegraphics[width=0.9\textwidth]{figures/Figure_7_robustness.pdf}
-\caption{Figure 7 — Multi-Seed Robustness}
+\caption{Figure 7  Multi-Seed Robustness}
 \end{figure}
 
 \clearpage
@@ -195,25 +208,25 @@ Author(s). `Artificial Intelligence and Machine Learning in Sepsis Detection and
 \begin{figure}[h!]
 \centering
 \includegraphics[width=0.9\textwidth]{supplementary/figures/Figure_S1_factorial_ablation.pdf}
-\caption{Figure S1 — Factorial Ablation}
+\caption{Figure S1  Factorial Ablation}
 \end{figure}
 
 \begin{figure}[h!]
 \centering
 \includegraphics[width=0.9\textwidth]{supplementary/figures/Figure_S2_threshold_grid.pdf}
-\caption{Figure S2 — Threshold Grid}
+\caption{Figure S2  Threshold Grid}
 \end{figure}
 
 \begin{figure}[h!]
 \centering
 \includegraphics[width=0.9\textwidth]{supplementary/figures/Figure_S3_model_progression.pdf}
-\caption{Figure S3 — Model Progression}
+\caption{Figure S3  Model Progression}
 \end{figure}
 
 \begin{figure}[h!]
 \centering
 \includegraphics[width=0.9\textwidth]{supplementary/figures/Figure_S4_confusion_matrix.pdf}
-\caption{Figure S4 — Descriptive Hourly Confusion Matrix}
+\caption{Figure S4  Descriptive Hourly Confusion Matrix}
 \end{figure}
 
 \clearpage
