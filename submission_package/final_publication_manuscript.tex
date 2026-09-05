@@ -7,7 +7,7 @@
 \usepackage{geometry}
 \geometry{margin=1in}
 
-\title{\textbf{A Time-Aware Transformer for Cross-Hospital Sepsis Early Warning:\\Linking Discrimination, Decision Utility, and Alert Burden}}
+\title{\textbf{Time-Aware Transformer for Cross-Hospital Sepsis Early Warning:\\Linking Discrimination, Decision Utility, and Alert Burden}}
 
 \author{
   Research Team\\
@@ -27,32 +27,12 @@
 \textbf{Conclusion:} The Time-Aware Transformer ($M3$) demonstrated superior cross-hospital discrimination ($0.9617$) and positive net utility ($+0.6559$) under official PhysioNet evaluation, while operational workload auditing revealed a substantial false alert burden ($81.19\%$ false alarms) under cross-hospital prevalence shift. Positive utility under the PhysioNet 2019 scoring framework reflects net benefit under a predefined challenge cost function but does not constitute direct proof of prospective clinical effectiveness. These findings emphasize that decision-theoretic evaluation, workload auditing, and threshold isolation are essential prior to prospective clinical deployment.
 \end{abstract}
 
-\section{Introduction}
+\section*{Introduction}
 Early recognition of sepsis in intensive care units (ICUs) is a major imperative in acute care medicine. Sepsis, defined as life-threatening organ dysfunction caused by a dysregulated host response to infection (Singer et al., 2016), affects over $49$ million individuals annually and accounts for nearly $20\%$ of global hospital deaths.
 
 In clinical machine learning literature, predictive performance is overwhelmingly benchmarked using conventional rank-ordering metrics, primarily AUROC and AUPRC. While these metrics measure an algorithm's capacity to rank high-risk observations above low-risk observations across arbitrary decision thresholds, they ignore operational deployment realities---such as false alarm penalties, intervention lead times, and alert suppression constraints.
 
-\section{Materials and Methods}
-We evaluated a structured family of predictive architectures: XGBoost ($M1$), Plain Transformer ($M2$), Time-Aware Transformer ($M3$), Organ-Aware Hybrid ($M4$), and Multi-Hybrid Mixture-of-Experts ($M5$).
-
-Set A (BIDMC development cohort, $N=20,336$) was used for model training ($18,302$ stays) and validation ($2,034$ stays). Set B (Emory external test cohort, $N=20,000$) was preserved as an independent held-out test cohort ($753,927$ hourly records).
-
-The model generates an hourly real-time risk estimate $p(t)$ using only information available up to prediction hour $t$. Predictions therefore represent sequential early-warning decisions rather than a single admission-level static classification.
-
-Threshold selection followed a strict two-stage isolation protocol:
-\begin{itemize}
-    \item \textbf{Stage 1 (BIDMC Validation Selection):} Threshold candidates $th \in [0.01, 0.99]$ were evaluated on BIDMC validation data ($N=2,034$), identifying $th^*=0.190$ before accessing test data.
-    \item \textbf{Stage 2 (Emory External Test Evaluation):} The frozen model and prespecified locked threshold $th=0.190$ were evaluated once on the Emory test cohort ($N=20,000$).
-\end{itemize}
-
-The decision threshold $th=0.190$ was prespecified strictly using BIDMC validation data before external test evaluation. The subsequent Emory threshold sweep was conducted only as a descriptive sensitivity analysis and was not used to select or modify the reported operating threshold.
-
-Net clinical utility was computed using the official PhysioNet 2019 metric scoring function:
-\begin{equation}
-U_{\text{official}} = \frac{U_{\text{observed}} - U_{\text{inaction}}}{U_{\text{best}} - U_{\text{inaction}}}
-\end{equation}
-
-\section{Experimental Results}
+\section*{Results}
 Table~\ref{tab:models} presents cross-hospital performance across the model family on the Emory test set.
 
 \begin{table}[h!]
@@ -84,8 +64,30 @@ Operational workload auditing revealed $5,337$ total alerts ($1,004$ true positi
 
 This illustrates why workload auditing is important before prospective clinical evaluation.
 
-\section{Discussion and Conclusion}
+\section*{Discussion}
 M3 achieved positive normalized utility (+0.655944) under the official PhysioNet 2019 utility function on an independent external Emory cohort, indicating that its alerting behavior generated net utility relative to the inactive reference strategy under the challenge's predefined scoring framework. This score represents performance under a predefined challenge decision-cost function and should not be interpreted as direct evidence of prospective clinical effectiveness, clinical benefit, or cost-effectiveness. Our findings demonstrate that decision-theoretic evaluation and workload auditing are essential prior to clinical deployment.
+
+Our study has several important limitations. First, the evaluation relies on a single retrospective external cohort (PhysioNet Set B / Emory). Although this provides a robust cross-hospital benchmark, prospective clinical validation across diverse hospital systems is required before deployment. Second, while our model explicitly optimizes for alert utility and false-positive reduction using the official PhysioNet Challenge metric, operational threshold dependence remains high, requiring institutional calibration. Third, our current architecture (M3) focuses on irregular physiological measurements and missingness but does not explicitly model clinical interventions or treatment-aware counterfactuals. Fourth, we found that dynamic organ-interaction mechanisms (e.g., M5) did not yield statistically significant improvement over M3 ($p=0.068$), suggesting that simple temporal representations of time-deltas and missingness may be sufficient for this specific task, but more advanced architectures might be necessary for broader clinical forecasting. In conclusion, high discrimination does not necessarily translate into high clinical or operational utility, and strict temporal causal validation combined with workload auditing remains critical for responsible clinical AI deployment.
+
+\section*{Methods}
+We evaluated a structured family of predictive architectures: XGBoost ($M1$), Plain Transformer ($M2$), Time-Aware Transformer ($M3$), Organ-Aware Hybrid ($M4$), and Multi-Hybrid Mixture-of-Experts ($M5$).
+
+Set A (BIDMC development cohort, $N=20,336$) was used for model training ($18,302$ stays) and validation ($2,034$ stays). Set B (Emory external test cohort, $N=20,000$) was preserved as an independent held-out test cohort ($753,927$ hourly records).
+
+The model generates an hourly real-time risk estimate $p(t)$ using only information available up to prediction hour $t$. Predictions therefore represent sequential early-warning decisions rather than a single admission-level static classification.
+
+Threshold selection followed a strict two-stage isolation protocol:
+\begin{itemize}
+    \item \textbf{Stage 1 (BIDMC Validation Selection):} Threshold candidates $th \in [0.01, 0.99]$ were evaluated on BIDMC validation data ($N=2,034$), identifying $th^*=0.190$ before accessing test data.
+    \item \textbf{Stage 2 (Emory External Test Evaluation):} The frozen model and prespecified locked threshold $th=0.190$ were evaluated once on the Emory test cohort ($N=20,000$).
+\end{itemize}
+
+The decision threshold $th=0.190$ was prespecified strictly using BIDMC validation data before external test evaluation. The subsequent Emory threshold sweep was conducted only as a descriptive sensitivity analysis and was not used to select or modify the reported operating threshold.
+
+Net clinical utility was computed using the official PhysioNet 2019 metric scoring function:
+\begin{equation}
+U_{\text{official}} = \frac{U_{\text{observed}} - U_{\text{inaction}}}{U_{\text{best}} - U_{\text{inaction}}}
+\end{equation}
 
 \section*{Administrative Disclosures \& Statements}
 
@@ -106,6 +108,43 @@ M3 achieved positive normalized utility (+0.655944) under the official PhysioNet
 \textbf{Reproducibility Statement:} Every numerical metric reported in this manuscript ($0.961726$ AUROC, $0.423114$ AUPRC, $0.015290$ Brier, $0.018151$ ECE, $+0.655944$ Official Utility, $18.81\%$ PPV, $16.99$ alerts/100 days) is cryptographically and empirically anchored to verified prediction artifacts (\texttt{results/m3\_final\_test\_predictions.npz}), frozen model checkpoints (\texttt{experiments/final\_m3\_frozen/best\_m3\_frozen.pt}), source JSON split manifests (\texttt{train\_ids.json}, \texttt{val\_ids.json}, \texttt{test\_ids.json}), and executable evaluation scripts (\texttt{evaluation/official\_physionet2019.py}, \texttt{scripts/run\_multiseed\_stability\_check.py}).
 
 \clearpage
+
+\section*{References}
+\begin{thebibliography}{10}
+
+\bibitem{ref:jcrc2024} % Elsevier 1
+Author(s). `Early prediction of sepsis in intensive care patients using the machine learning algorithm NAVOY\textregistered~Sepsis, a prospective randomized clinical validation study.'' \textit{Journal of Critical Care} (Elsevier), 2024. DOI: 10.1016/j.jcrc.2023.154400.
+
+\bibitem{ref:jhep2026} % Elsevier 2
+Author(s). `SAT-480 Beyond MELD: machine learning mortality prediction in cirrhotic patients with sepsis.'' \textit{Journal of Hepatology} (Elsevier), 2026. DOI: 10.1016/s0168-8278(26)00620-3.
+
+\bibitem{ref:jcrc2024_2} % Elsevier 3
+Author(s). `The prediction power of machine learning on estimating the sepsis mortality at intensive care unit.'' \textit{Journal of Critical Care} (Elsevier), 2024. DOI: 10.1016/j.jcrc.2024.154720.
+
+\bibitem{ref:ibmed2026} % Elsevier 4
+Author(s). `Early prediction of sepsis infection risk for intensive care unit patients using machine learning based approach.'' \textit{Intelligence-Based Medicine} (Elsevier), 2026. DOI: 10.1016/j.ibmed.2026.100403.
+
+\bibitem{ref:engmed2026} % Elsevier 5
+Author(s). `A machine learning model for mortality risk prediction of sepsis patients based on the medical information mart for intensive care III database.'' \textit{EngMedicine} (Elsevier), 2026. DOI: 10.1016/j.engmed.2025.100118.
+
+\bibitem{ref:signavitae2025} % Other 1
+Author(s). `Early sepsis prediction in elderly patients with urinary tract infections: a machine learning.'' \textit{Signa Vitae}, 2025. DOI: 10.22514/sv.2025.161.
+
+\bibitem{ref:info17050430} % Other 2
+Author(s). `From Data to Diagnosis: A Machine Learning-Enabled Framework for Early Sepsis Prediction and Prevention.'' \textit{Information} (MDPI), 2026. DOI: 10.3390/info17050430.
+
+\bibitem{ref:ijwm2026} % Other 3
+Author(s). `Nursing-Oriented Risk Prediction and Response to Sepsis-Associated Acute Kidney Injury Using Interpretable Machine Learning and Delphi Consensus.'' \textit{International Journal of World Medicine}, 2026. DOI: 10.38007/ijwm.2026.070107.
+
+\bibitem{ref:shock2026} % Other 4
+Author(s). `Approaching machine learning for length of stay prediction in sepsis patients presenting to emergency department from 2014-2024.'' \textit{Shock}, 2026. DOI: 10.1097/shk.0000000000002818.
+
+\bibitem{ref:saupress2025} % Other 5
+Author(s). `Artificial Intelligence and Machine Learning in Sepsis Detection and Risk Prediction: Big Data, Real-Time Surveillance, and Predictive Analytics in Sepsis Care.'' \textit{Precision Medicine in Sepsis}, 2025. DOI: 10.59537/saupress.2494.
+
+\end{thebibliography}
+
+
 \section*{Figures}
 
 \begin{figure}[h!]
@@ -196,5 +235,7 @@ M3 achieved positive normalized utility (+0.655944) under the official PhysioNet
 \input{supplementary/tables/table04_threshold_sensitivity.tex}
 
 \end{document}
+
+
 
 
