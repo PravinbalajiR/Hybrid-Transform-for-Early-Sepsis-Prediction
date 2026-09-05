@@ -31,7 +31,7 @@ Every authoritative numerical metric in the frozen $M3$ research freeze has been
 | **ECE (10 Bins)** | **`0.018151`** | `[0.0162, 0.0201]` | **VERIFIED** | [`results/revised_publication/FINAL_REPRODUCIBILITY_REPORT.md`](file:///C:/Users/gokul/Desktop/sepsis%20prediction/Sepsis-Hybrid-Transformer/results/revised_publication/FINAL_REPRODUCIBILITY_REPORT.md) |
 | **Accuracy ($th=0.190$)** | **`0.971542`** (`97.15%`) | `[0.9701, 0.9729]` | **VERIFIED** | `evaluate_sepsis_score.py` on Emory PSVs |
 | **F-measure** | **`0.231804`** | `[0.2210, 0.2425]` | **VERIFIED** | `evaluate_sepsis_score.py` on Emory PSVs |
-| **Raw Utility ($U_{\text{obs}}$)** | **`1515.6500`** pts | — | **VERIFIED** | `evaluate_sepsis_score.py` on Emory PSVs |
+| **Raw Utility ($U_{\text{obs}}$)** | **`1514.78`** pts | — | **VERIFIED** | `evaluate_sepsis_score.py` on Emory PSVs |
 | **Inaction Utility ($U_{\text{inact}}$)** | **`-9512.4444`** pts | — | **VERIFIED** | `evaluate_sepsis_score.py` on Emory PSVs |
 | **Oracle Utility ($U_{\text{best}}$)** | **`7298.7778`** pts | — | **VERIFIED** | `evaluate_sepsis_score.py` on Emory PSVs |
 | **Official Utility ($U_{\text{official}}$)** | **`+0.655944`** (`+0.6559`) | `[+0.6310, +0.6800]` | **VERIFIED** | `evaluate_sepsis_score.py` ($th=0.190$) |

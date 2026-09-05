@@ -33,7 +33,7 @@ The following metrics were independently recomputed directly from the frozen pre
 | **Expected Calibration Error (ECE)** | **`0.018151`** (10 bins) | `m3_final_test_predictions.npz` | **VERIFIED EXACT** |
 | **Accuracy at Threshold $th=0.190$** | **`0.971542`** (`97.15%`) | `evaluate_sepsis_score.py` | **VERIFIED EXACT** |
 | **F-measure at Threshold $th=0.190$** | **`0.231804`** | `evaluate_sepsis_score.py` | **VERIFIED EXACT** |
-| **Raw Observed Utility ($U_{\text{obs}}$)** | **`1515.6500`** pts | `evaluate_sepsis_score.py` | **VERIFIED EXACT** |
+| **Raw Observed Utility ($U_{\text{obs}}$)** | **`1514.78`** pts | `evaluate_sepsis_score.py` | **VERIFIED EXACT** |
 | **Raw Inaction Utility ($U_{\text{inact}}$)** | **`-9512.4444`** pts | `evaluate_sepsis_score.py` | **VERIFIED EXACT** |
 | **Raw Best / Oracle Utility ($U_{\text{best}}$)**| **`7298.7778`** pts | `evaluate_sepsis_score.py` | **VERIFIED EXACT** |
 | **Normalization Denominator ($U_{\text{best}}-U_{\text{inact}}$)** | **`16811.2222`** pts | `evaluate_sepsis_score.py` | **VERIFIED EXACT** |
@@ -54,7 +54,7 @@ The following metrics were independently recomputed directly from the frozen pre
 The official PhysioNet 2019 utility metric computes hourly utility $u(t)$ based on a clinical onset lead time shift $t_{\text{sepsis}} = t_{\text{label\_first}} + 6\text{h}$. For septic trajectories, positive utility ramps linearly from $0.0$ to $+1.0$ in $[t_{\text{sepsis}}-12\text{h}, t_{\text{sepsis}}-6\text{h}]$ and decays to $0.0$ in $[t_{\text{sepsis}}-6\text{h}, t_{\text{sepsis}}+3\text{h}]$. Non-septic positive predictions incur a penalty of $-0.05$ points per hour. Un-alerted septic trajectories incur an un-alerted penalty decaying to $-2.0$ points per missed patient window.
 
 The official normalized utility is computed as:
-$$U_{\text{normalized}} = \frac{U_{\text{observed}} - U_{\text{inaction}}}{U_{\text{best}} - U_{\text{inaction}}} = \frac{1515.6500 - (-9512.4444)}{7298.7778 - (-9512.4444)} = \frac{11028.0944}{16811.2222} = \mathbf{0.655944}$$
+$$U_{\text{normalized}} = \frac{U_{\text{observed}} - U_{\text{inaction}}}{U_{\text{best}} - U_{\text{inaction}}} = \frac{1514.78 - (-9512.4444)}{7298.7778 - (-9512.4444)} = \frac{11027.2222}{16811.2222} = \mathbf{0.655944}$$
 
 ### 3.2 Evaluator Equivalence
 Evaluating predictions across 500 edge cases using both `evaluation/official_physionet2019.py` and `evaluation/utility_score.py` yielded:
